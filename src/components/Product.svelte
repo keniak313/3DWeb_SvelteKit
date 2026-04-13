@@ -8,7 +8,14 @@
 
 		console.log($state.snapshot(value));
 
-		controls?.setLookAt(...value.part.position, ...value.part.target, true);
+		if (controls) {
+			const currentAzimuth = controls.azimuthAngle;
+			const normalizedAzimuth = currentAzimuth % (Math.PI * 2);
+
+			controls.azimuthAngle = normalizedAzimuth;
+
+			controls?.setLookAt(...value.part.position, ...value.part.target, true);
+		}
 	};
 
 	export const getSelected = () => {
@@ -106,7 +113,13 @@ target: [${tar.x.toFixed(2)}, ${tar.y.toFixed(2)}, ${tar.z.toFixed(2)}]`;
 					<button
 						onclick={() => {
 							selected = null;
-							controls?.setLookAt(...defaultCamParams);
+							if (controls) {
+								const currentAzimuth = controls.azimuthAngle;
+								const normalizedAzimuth = currentAzimuth % (Math.PI * 2);
+
+								controls.azimuthAngle = normalizedAzimuth;
+								controls?.setLookAt(...defaultCamParams);
+							}
 						}}>CLOSE</button
 					>
 				</div>

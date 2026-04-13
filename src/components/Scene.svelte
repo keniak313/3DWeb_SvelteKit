@@ -49,12 +49,12 @@
 </script>
 
 <AssetPreloader />
-
+<!-- 
 <EffectComposer>
 	<BloomEffect intensity={0.2} mipmapBlur={true} />
 	<SMAAEffect preset={SMAAPreset.ULTRA} />
 	<ToneMappingEffect mode={ToneMappingMode.ACES_FILMIC} />
-</EffectComposer>
+</EffectComposer> -->
 
 <Environment texture={getHDRI()} isBackground={false} />
 
