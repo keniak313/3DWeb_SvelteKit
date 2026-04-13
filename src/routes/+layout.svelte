@@ -19,20 +19,23 @@
 		}
 		:root {
 			width: 100%;
-			min-height: 100vh;
+			min-height: 100dvh;
 		}
 
-		html {
+		html,
+		body {
 			scroll-behavior: smooth;
+			overscroll-behavior: none;
 			/* overflow-y: scroll; */
 			/* scrollbar-gutter: stable; */
 		}
 
+		html,
 		body {
 			display: flex;
 			flex-direction: column;
 			justify-content: space-between;
-			min-height: 100vh;
+			min-height: 100dvh;
 			width: 100%;
 			align-self: center;
 			justify-self: center;

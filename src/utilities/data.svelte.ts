@@ -50,10 +50,12 @@ export const models = $state({
 	Watch01: {
 		id: nanoid(5),
 		name: 'Watch01',
+		displayName: 'Super Zegarek',
 		parts: {
 			Body: {
 				id: nanoid(5),
 				name: 'Body',
+				displayName: 'Obudowa',
 				description: 'Super durable materials',
 				material: materials.steel,
 				color: materials.steel.colors[0],
@@ -65,6 +67,7 @@ export const models = $state({
 			Glass: {
 				id: nanoid(5),
 				name: 'Glass',
+				displayName: 'Szkiełko',
 				description: 'Gorilla glass V10',
 				material: materials.glass,
 				color: materials.glass.colors[1],

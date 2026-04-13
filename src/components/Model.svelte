@@ -54,6 +54,8 @@
 				scale={[mesh.scale.x, mesh.scale.y, mesh.scale.z]}
 				castShadow={mesh.name !== 'Glass' && true}
 				receiveShadow
+				onpointerenter={onPointerEnter}
+				onpointerleave={onPointerLeave}
 				onclick={(e) => {
 					e.stopPropagation();
 					setSelected({
@@ -82,9 +84,8 @@
 						}}
 					>
 						{#if part.visible}
-							<div>
+							<div class="info">
 								<button
-									class="info"
 									transition:fade
 									onclick={(e) => {
 										setSelected({
@@ -93,7 +94,7 @@
 											mesh: mesh
 										});
 									}}
-									>{part.name}
+								>
 								</button>
 								{#if getSelected()?.part.name === mesh.name}
 									<div class="description" transition:slide>
@@ -111,11 +112,20 @@
 
 <style>
 	.info {
-		background-color: red;
-		padding: 0.2rem;
+		opacity: 0.5;
 	}
 	.description {
-		background-color: red;
-		padding: 0.2rem;
+		display: flex;
+		width: fit-content;
+		background-color: rgb(212, 212, 212);
+	}
+	button {
+		width: 20px;
+		height: 20px;
+		border-radius: 50%;
+		outline: none;
+		border: none;
+		background-color: rgb(212, 212, 212);
+		cursor: pointer;
 	}
 </style>

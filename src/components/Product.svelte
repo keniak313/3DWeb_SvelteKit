@@ -1,6 +1,7 @@
 <script module>
 	let selected = $state();
 	let controls = $state<CameraControlsRef>();
+	const defaultCamParams = [2.31, 1.43, 2.96, 0, 0.8, 0, true];
 
 	export const setSelected = (value: string) => {
 		selected = value;
@@ -32,13 +33,13 @@
 	import { Suspense, useProgress, type CameraControlsRef } from '@threlte/extras';
 	import { onMount } from 'svelte';
 	import { Pane } from 'tweakpane';
+	import { fade } from 'svelte/transition';
 
 	let isStudio = $state(false);
 	const { progress } = useProgress();
 
-	// controls?.setLookAt(3.5, 1.5, 4, 0, 0.8, 0, true);
-
 	onMount(() => {
+		controls?.setLookAt(...defaultCamParams);
 		const pane = new Pane({ title: 'Camera Helper 📸' });
 
 		pane
@@ -71,39 +72,44 @@ target: [${tar.x.toFixed(2)}, ${tar.y.toFixed(2)}, ${tar.z.toFixed(2)}]`;
 <div class="canvas-wrapper">
 	<div class="info">
 		{#if $progress < 1}
-			<div class="loader">Ładowanie: {Math.round($progress * 100)}%</div>
+			<div class="loader" transition:fade>Ładowanie: {Math.round($progress * 100)}%</div>
 		{/if}
 		{#if selected}
 			<div class="bot">
-				<p>{selected?.model.name} - {selected?.part.name}</p>
-				{#each selected.part.materials as material (material.id)}
-					<div>
-						<button
-							class={selected.part.material.id === material.id && 'selected'}
-							onclick={(e) => {
-								setProductMaterial({ part: selected.part, material });
-							}}
-							>{material.name}
-						</button>
-					</div>
-					{#if selected.part.material.id === material.id}
-						{#each selected.part.material.colors as color (color.id)}
+				<div class="title">
+					<p>{selected?.model.displayName} - {selected?.part.displayName}</p>
+					<p>{selected?.part.description}</p>
+				</div>
+				<div class="options">
+					{#each selected.part.materials as material (material.id)}
+						<div>
 							<button
-								class={'color ' + (selected.part.color.id === color.id && 'selected')}
-								style="background-color: {color.color}"
-								onclick={() => {
-									setProductMaterialColor(color);
-								}}>X</button
-							>
-						{/each}
-					{/if}
-				{/each}
-				<button
-					onclick={() => {
-						selected = null;
-						controls?.setLookAt(3.5, 1.5, 4, 0, 0.8, 0, true);
-					}}>CLOSE</button
-				>
+								class={selected.part.material.id === material.id && 'selected'}
+								onclick={(e) => {
+									setProductMaterial({ part: selected.part, material });
+								}}
+								>{material.name}
+							</button>
+						</div>
+						{#if selected.part.material.id === material.id}
+							{#each selected.part.material.colors as color (color.id)}
+								<button
+									class={'color ' + (selected.part.color.id === color.id && 'selected')}
+									style="background-color: {color.color}"
+									onclick={() => {
+										setProductMaterialColor(color);
+									}}>X</button
+								>
+							{/each}
+						{/if}
+					{/each}
+					<button
+						onclick={() => {
+							selected = null;
+							controls?.setLookAt(...defaultCamParams);
+						}}>CLOSE</button
+					>
+				</div>
 			</div>
 		{/if}
 	</div>
@@ -134,7 +140,7 @@ target: [${tar.x.toFixed(2)}, ${tar.y.toFixed(2)}, ${tar.z.toFixed(2)}]`;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		padding: 2rem;
+		padding: 0;
 		top: 0;
 		left: 0;
 		width: 100%;
@@ -145,9 +151,23 @@ target: [${tar.x.toFixed(2)}, ${tar.y.toFixed(2)}, ${tar.z.toFixed(2)}]`;
 
 	.bot {
 		display: flex;
+		flex-direction: column;
 		gap: 1rem;
 		place-self: end;
 		pointer-events: all;
+		padding: 2rem;
+	}
+
+	.title {
+		display: flex;
+		flex-direction: column;
+		background-color: white;
+		padding: 0.2rem;
+	}
+
+	.options {
+		display: flex;
+		gap: 1rem;
 	}
 
 	.loader {

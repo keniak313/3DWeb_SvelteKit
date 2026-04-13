@@ -60,13 +60,9 @@
 
 <T.AmbientLight visible />
 
-<T.PerspectiveCamera makeDefault position={[5, 0, 5]} visible fov={35}>
+<T.PerspectiveCamera makeDefault visible fov={35}>
 	<CameraControls
 		bind:ref={controls}
-		oncreate={(ref) => {
-			ref.setTarget(0, 0.8, 0);
-			// ref.setLookAt(3.5, 1.5, 4, 0, 0.8, 0, true);
-		}}
 		maxPolarAngle={Math.PI / 2}
 		minPolarAngle={Math.PI / 5}
 		polarAngle={Math.PI / 2.4}
