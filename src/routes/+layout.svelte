@@ -19,7 +19,7 @@
 		}
 		:root {
 			width: 100%;
-			min-height: 100dvh;
+			min-height: 100svh;
 		}
 
 		html,
@@ -35,7 +35,7 @@
 			display: flex;
 			flex-direction: column;
 			justify-content: space-between;
-			min-height: 100dvh;
+			min-height: 100svh;
 			width: 100%;
 			align-self: center;
 			justify-self: center;
