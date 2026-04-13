@@ -17,10 +17,6 @@
 			box-sizing: border-box;
 			margin: 0;
 		}
-		:root {
-			width: 100%;
-			min-height: 100svh;
-		}
 
 		html,
 		body {
@@ -35,7 +31,7 @@
 			display: flex;
 			flex-direction: column;
 			justify-content: space-between;
-			min-height: 100svh;
+			min-height: 100vh;
 			width: 100%;
 			align-self: center;
 			justify-self: center;

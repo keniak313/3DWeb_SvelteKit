@@ -132,7 +132,7 @@ target: [${tar.x.toFixed(2)}, ${tar.y.toFixed(2)}, ${tar.z.toFixed(2)}]`;
 		position: relative;
 		display: flex;
 		width: 100%;
-		height: 100vh;
+		height: 100dvh;
 		background-color: white;
 	}
 	.info {
