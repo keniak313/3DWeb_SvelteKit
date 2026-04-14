@@ -5,6 +5,6 @@ import { defineConfig } from 'vite';
 export default defineConfig({
 	plugins: [sveltekit(), threlteStudio()],
 	ssr: {
-		noExternal: ['camera-controls', 'postprocessing']
+		noExternal: ['camera-controls', 'postprocessing', 'gsap']
 	}
 });
