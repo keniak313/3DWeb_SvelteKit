@@ -5,7 +5,7 @@
 	import { getSelected, setSelected } from './Product.svelte';
 	import { models } from '../utilities/data.svelte';
 	import { Color, MeshBasicMaterial } from 'three';
-	import { fade, slide } from 'svelte/transition';
+	import { fade, scale, slide } from 'svelte/transition';
 	import { onMount } from 'svelte';
 
 	let { model, visible = false } = $props();
@@ -84,7 +84,7 @@
 						}}
 					>
 						{#if part.visible}
-							<div class="info">
+							<div class="info" in:scale={{ duration: 1000 }}>
 								<button
 									transition:fade
 									onclick={(e) => {

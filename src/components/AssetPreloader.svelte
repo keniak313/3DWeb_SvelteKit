@@ -12,7 +12,7 @@
 	import { EquirectangularReflectionMapping } from 'three';
 	import { HDRLoader } from 'three/examples/jsm/Addons.js';
 
-	const models = ['/3D/Watch01/Watch01.glb'];
+	const models = ['/3D/Watch01/Watch01.glb', '/3D/BG01.glb'];
 
 	const textures = ['/3D/Watch01/Watch01_Body_AO.png'];
 

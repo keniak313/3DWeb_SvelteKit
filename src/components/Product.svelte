@@ -1,6 +1,8 @@
 <script module>
 	let selected = $state();
 	let controls = $state<CameraControlsRef>();
+	let dofTarget = $state(new Vector3(0, 0, 0));
+
 	const defaultCamParams = [2.31, 1.43, 2.96, 0, 0.8, 0, true];
 
 	export const setSelected = (value: string) => {
@@ -16,6 +18,9 @@
 
 			controls?.setLookAt(...value.part.position, ...value.part.target, true);
 		}
+
+		console.log(value.mesh.position);
+		dofTarget = value.mesh.position;
 	};
 
 	export const getSelected = () => {
@@ -41,13 +46,30 @@
 	import { onMount } from 'svelte';
 	import { Pane } from 'tweakpane';
 	import { fade } from 'svelte/transition';
+	import { Vector3 } from 'three';
+	import Loader from './Loader.svelte';
 
 	let isStudio = $state(false);
-	const { progress } = useProgress();
+
+	let postProcessConfig = $state({
+		dof: {
+			focusDistance: 3.35,
+			focalLength: 0.68,
+			bokehScale: 2.72,
+			focusRange: 0.1
+		},
+		bloom: {
+			luminanceThreshold: 0.9,
+			luminanceSmoothing: 0.5,
+			intensity: 0.2,
+			radius: 0.5,
+			mipmapBlur: true
+		}
+	});
 
 	onMount(() => {
 		controls?.setLookAt(...defaultCamParams);
-		const pane = new Pane({ title: 'Camera Helper 📸' });
+		const pane = new Pane();
 
 		pane
 			.addButton({
@@ -72,75 +94,124 @@ target: [${tar.x.toFixed(2)}, ${tar.y.toFixed(2)}, ${tar.z.toFixed(2)}]`;
 				alert('Skopiowano do schowka!');
 			});
 
+		const postProcessPane = pane.addTab({
+			pages: [{ title: 'Depth of Field' }, { title: 'Bloom' }]
+		});
+
+		postProcessPane.pages[0].addBinding(postProcessConfig.dof, 'focusDistance', {
+			min: -2,
+			max: 10,
+			step: 0.01
+		});
+		postProcessPane.pages[0].addBinding(postProcessConfig.dof, 'focalLength', {
+			min: 0,
+			max: 1,
+			step: 0.01
+		});
+		postProcessPane.pages[0].addBinding(postProcessConfig.dof, 'bokehScale', {
+			min: 0,
+			max: 10,
+			step: 0.01
+		});
+		postProcessPane.pages[0].addBinding(postProcessConfig.dof, 'focusRange', {
+			min: -2,
+			max: 10,
+			step: 0.01
+		});
+		postProcessPane.pages[1].addBinding(postProcessConfig.bloom, 'intensity', {
+			min: 0,
+			max: 10,
+			step: 0.01
+		});
+		postProcessPane.pages[1].addBinding(postProcessConfig.bloom, 'mipmapBlur');
+		postProcessPane.pages[1].addBinding(postProcessConfig.bloom, 'radius', {
+			min: 0,
+			max: 1,
+			step: 0.01
+		});
+		postProcessPane.pages[1].addBinding(postProcessConfig.bloom, 'luminanceThreshold', {
+			min: 0,
+			max: 100,
+			step: 0.01
+		});
+		postProcessPane.pages[1].addBinding(postProcessConfig.bloom, 'luminanceSmoothing', {
+			min: 0,
+			max: 1,
+			step: 0.01
+		});
+
 		return () => pane.dispose();
 	});
 </script>
 
-<div class="canvas-wrapper">
-	<div class="info">
-		{#if $progress < 1}
-			<div class="loader" transition:fade>Ładowanie: {Math.round($progress * 100)}%</div>
-		{/if}
-		{#if selected}
-			<div class="bot">
-				<div class="title">
-					<p>{selected?.model.displayName} - {selected?.part.displayName}</p>
-					<p>{selected?.part.description}</p>
-				</div>
-				<div class="options">
-					{#each selected.part.materials as material (material.id)}
-						<div>
-							<button
-								class={selected.part.material.id === material.id && 'selected'}
-								onclick={(e) => {
-									setProductMaterial({ part: selected.part, material });
-								}}
-								>{material.name}
-							</button>
-						</div>
-						{#if selected.part.material.id === material.id}
-							{#each selected.part.material.colors as color (color.id)}
+<section>
+	<Loader />
+	<div class="canvas-wrapper" in:fade>
+		<div class="info">
+			{#if selected}
+				<div class="bot">
+					<div class="title">
+						<p>{selected?.model.displayName} - {selected?.part.displayName}</p>
+						<p>{selected?.part.description}</p>
+					</div>
+					<div class="options">
+						{#each selected.part.materials as material (material.id)}
+							<div>
 								<button
-									class={'color ' + (selected.part.color.id === color.id && 'selected')}
-									style="background-color: {color.color}"
-									onclick={() => {
-										setProductMaterialColor(color);
-									}}>X</button
-								>
-							{/each}
-						{/if}
-					{/each}
-					<button
-						onclick={() => {
-							selected = null;
-							if (controls) {
-								const currentAzimuth = controls.azimuthAngle;
-								const normalizedAzimuth = currentAzimuth % (Math.PI * 2);
+									class={selected.part.material.id === material.id && 'selected'}
+									onclick={(e) => {
+										setProductMaterial({ part: selected.part, material });
+									}}
+									>{material.name}
+								</button>
+							</div>
+							{#if selected.part.material.id === material.id}
+								{#each selected.part.material.colors as color (color.id)}
+									<button
+										class={'color ' + (selected.part.color.id === color.id && 'selected')}
+										style="background-color: {color.color}"
+										onclick={() => {
+											setProductMaterialColor(color);
+										}}>X</button
+									>
+								{/each}
+							{/if}
+						{/each}
+						<button
+							onclick={() => {
+								selected = null;
+								if (controls) {
+									const currentAzimuth = controls.azimuthAngle;
+									const normalizedAzimuth = currentAzimuth % (Math.PI * 2);
 
-								controls.azimuthAngle = normalizedAzimuth;
-								controls?.setLookAt(...defaultCamParams);
-							}
-						}}>CLOSE</button
-					>
+									controls.azimuthAngle = normalizedAzimuth;
+									controls?.setLookAt(...defaultCamParams);
+								}
+							}}>CLOSE</button
+						>
+					</div>
 				</div>
-			</div>
-		{/if}
-	</div>
-	<Canvas>
-		<!-- <Renderer /> -->
-		<Suspense>
-			{#if isStudio}
-				<Studio>
-					<Scene bind:controls />
-				</Studio>
-			{:else}
-				<Scene bind:controls />
 			{/if}
-		</Suspense>
-	</Canvas>
-</div>
+		</div>
+		<Canvas>
+			<!-- <Renderer /> -->
+			<Suspense>
+				{#if isStudio}
+					<Studio>
+						<Scene bind:controls bind:dofTarget config={postProcessConfig} />
+					</Studio>
+				{:else}
+					<Scene bind:controls bind:dofTarget config={postProcessConfig} />
+				{/if}
+			</Suspense>
+		</Canvas>
+	</div>
+</section>
 
 <style>
+	.section {
+		position: relative;
+	}
 	.canvas-wrapper {
 		position: relative;
 		display: flex;
@@ -181,15 +252,6 @@ target: [${tar.x.toFixed(2)}, ${tar.y.toFixed(2)}, ${tar.z.toFixed(2)}]`;
 	.options {
 		display: flex;
 		gap: 1rem;
-	}
-
-	.loader {
-		display: flex;
-		width: 100%;
-		height: 100%;
-		align-items: center;
-		justify-content: center;
-		background-color: white;
 	}
 
 	.color {

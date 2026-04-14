@@ -2,63 +2,70 @@
 	import { T } from '@threlte/core';
 	import {
 		interactivity,
-		OrbitControls,
 		CameraControls,
-		type CameraControlsRef,
 		Environment,
 		GLTF,
 		useGltf,
 		useTexture,
-		ContactShadows
+		ContactShadows,
+		Suspense,
+		SoftShadows,
+		BakeShadows
 	} from '@threlte/extras';
-	import { Spring } from 'svelte/motion';
 	import {
-		AmbientLight,
-		Box3,
+		Color,
 		EquirectangularReflectionMapping,
-		MathUtils,
 		MeshBasicMaterial,
 		MeshStandardMaterial,
-		RepeatWrapping,
-		TextureLoader,
 		Vector3
 	} from 'three';
 	import { HDRLoader } from 'three/examples/jsm/Addons.js';
 	import { EffectComposer } from 'threlte-postprocessing';
 	import {
 		BloomEffect,
-		SMAAEffect,
-		SSAOEffect,
+		DepthOfFieldEffect,
 		ToneMappingEffect
 	} from 'threlte-postprocessing/effects';
-	import { SMAAPreset, ToneMappingMode } from 'postprocessing';
+	import { ToneMappingMode } from 'postprocessing';
 	import AssetPreloader, { getHDRI } from './AssetPreloader.svelte';
 	import { models } from '../utilities/data.svelte';
 	import Model from './Model.svelte';
-	import { getSelected } from './Product.svelte';
 
-	let { controls = $bindable() } = $props();
+	let { controls = $bindable(), dofTarget = $bindable(), config } = $props();
 
-	const loader = new HDRLoader().setPath('/HDRI/').setRequestHeader({});
-	const promise = loader.loadAsync('monochrome_studio_02_2k.hdr').then((texture) => {
-		texture.mapping = EquirectangularReflectionMapping;
-		return texture;
-	});
+	// const loader = new HDRLoader().setPath('/HDRI/').setRequestHeader({});
+	// const promise = loader.loadAsync('monochrome_studio_02_2k.hdr').then((texture) => {
+	// 	texture.mapping = EquirectangularReflectionMapping;
+	// 	return texture;
+	// });
 
 	interactivity();
 </script>
 
 <AssetPreloader />
-<!-- 
-<EffectComposer>
-	<BloomEffect intensity={0.2} mipmapBlur={true} />
-	<SMAAEffect preset={SMAAPreset.ULTRA} />
+
+<EffectComposer multisampling={8}>
+	<DepthOfFieldEffect
+		focusDistance={config.dof.focusDistance}
+		focalLength={config.dof.focalLength}
+		bokehScale={config.dof.bokehScale}
+		focusRange={config.dof.focusRange}
+		height={480}
+	/>
+	<BloomEffect
+		luminanceThreshold={config.bloom.luminanceThreshold}
+		luminanceSmoothing={config.bloom.luminanceSmoothing}
+		radius={config.bloom.radius}
+		intensity={config.bloom.intensity}
+		mipmapBlur={config.bloom.mipmapBlur}
+	/>
+
 	<ToneMappingEffect mode={ToneMappingMode.ACES_FILMIC} />
-</EffectComposer> -->
+</EffectComposer>
 
 <Environment texture={getHDRI()} isBackground={false} />
 
-<T.AmbientLight visible />
+<!-- <T.AmbientLight intensity={0.5} visible /> -->
 
 <T.PerspectiveCamera makeDefault visible fov={35}>
 	<CameraControls
@@ -76,24 +83,40 @@
 	position={[-14.9, 10, 10]}
 	visible
 	intensity={2}
-	castShadow
+	castShadow={false}
 	shadow.mapSize.width={1024}
 	shadow.mapSize.height={1024}
 	shadow.bias={0}
-	shadow.radius={3.8}
+	shadow.radius={1}
 />
 
 <T.DirectionalLight
 	position={[0, 20, 0]}
-	castShadow={false}
-	shadow.radius={30}
+	castShadow
+	shadow.radius={10}
 	shadow.mapSize.width={1024}
 	shadow.mapSize.height={1024}
 	visible
-	intensity={1}
+	intensity={2}
+	shadow.bias={0}
+	color="#ffffff"
 />
 {#each Object.values(models) as model (model.id)}
 	<Model {model} visible={true} />
 {/each}
 
-<!-- <ContactShadows color="black" opacity={0.3} scale={20} blur={3} /> -->
+<!-- <ContactShadows color="black" opacity={1} scale={10} blur={0} resolution={2048} /> -->
+<BakeShadows />
+
+<GLTF
+	url="/3D/BG01.glb"
+	oncreate={(ref) => {
+		ref.children[0].castShadow = false;
+		ref.children[0].receiveShadow = true;
+		console.log(
+			(ref.children[0].material = new MeshStandardMaterial({
+				color: new Color('white')
+			}))
+		);
+	}}
+/>
