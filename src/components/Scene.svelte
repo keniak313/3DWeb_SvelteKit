@@ -30,8 +30,9 @@
 	import AssetPreloader, { getHDRI } from './AssetPreloader.svelte';
 	import { models } from '../utilities/data.svelte';
 	import Model from './Model.svelte';
+	import { DEFAULT_VIEW } from './Product.svelte';
 
-	let { controls = $bindable(), dofTarget = $bindable(), config } = $props();
+	let { controls = $bindable(), dofTarget = $bindable(), config, defaultCamParams } = $props();
 
 	// const loader = new HDRLoader().setPath('/HDRI/').setRequestHeader({});
 	// const promise = loader.loadAsync('monochrome_studio_02_2k.hdr').then((texture) => {
@@ -50,7 +51,6 @@
 		focalLength={config.dof.focalLength}
 		bokehScale={config.dof.bokehScale}
 		focusRange={config.dof.focusRange}
-		height={480}
 	/>
 	<BloomEffect
 		luminanceThreshold={config.bloom.luminanceThreshold}
@@ -67,9 +67,12 @@
 
 <!-- <T.AmbientLight intensity={0.5} visible /> -->
 
-<T.PerspectiveCamera makeDefault visible fov={35}>
+<T.PerspectiveCamera makeDefault visible fov={35} near={0.01} far={20}>
 	<CameraControls
 		bind:ref={controls}
+		oncreate={(ref) => {
+			ref.setLookAt(...DEFAULT_VIEW.position, ...DEFAULT_VIEW.target, true);
+		}}
 		maxPolarAngle={Math.PI / 2}
 		minPolarAngle={Math.PI / 5}
 		polarAngle={Math.PI / 2.4}

@@ -3,58 +3,19 @@
 	let controls = $state<CameraControlsRef>();
 	let dofTarget = $state(new Vector3(0, 0, 0));
 
-	const defaultCamParams = [2.31, 1.43, 2.96, 0, 0.8, 0, true];
-
-	export const setSelected = (value: string) => {
-		selected = value;
-
-		console.log($state.snapshot(value));
-
-		if (controls) {
-			const currentAzimuth = controls.azimuthAngle;
-			const normalizedAzimuth = currentAzimuth % (Math.PI * 2);
-
-			controls.azimuthAngle = normalizedAzimuth;
-
-			controls?.setLookAt(...value.part.position, ...value.part.target, true);
+	export const DEFAULT_VIEW = {
+		position: [2.31, 1.43, 2.96],
+		target: [0, 0.8, 0],
+		dof: {
+			focusDistance: 3.35,
+			focalLength: 2.5
 		}
-
-		console.log(value.mesh.position);
-		dofTarget = value.mesh.position;
 	};
-
-	export const getSelected = () => {
-		return selected;
-	};
-
-	const setProductMaterial = ({ part, material }) => {
-		part.material = material;
-		part.color = material.color;
-	};
-
-	const setProductMaterialColor = (color: string) => {
-		selected.part.color = color;
-	};
-</script>
-
-<script lang="ts">
-	import { Canvas } from '@threlte/core';
-	import Scene from '../components/Scene.svelte';
-	import { Studio } from '@threlte/studio';
-	import Renderer from '../components/Renderer.svelte';
-	import { Suspense, useProgress, type CameraControlsRef } from '@threlte/extras';
-	import { onMount } from 'svelte';
-	import { Pane } from 'tweakpane';
-	import { fade } from 'svelte/transition';
-	import { Vector3 } from 'three';
-	import Loader from './Loader.svelte';
-
-	let isStudio = $state(false);
 
 	let postProcessConfig = $state({
 		dof: {
 			focusDistance: 3.35,
-			focalLength: 0.68,
+			focalLength: 2.5,
 			bokehScale: 2.72,
 			focusRange: 0.1
 		},
@@ -67,132 +28,95 @@
 		}
 	});
 
-	onMount(() => {
-		controls?.setLookAt(...defaultCamParams);
-		const pane = new Pane();
+	export const setSelected = (value: string) => {
+		selected = value;
 
-		pane
-			.addButton({
-				title: 'Pobierz współrzędne (Konsola + Clipboard)'
-			})
-			.on('click', () => {
-				if (!controls) return;
+		console.log($state.snapshot(value));
 
-				// Pobieramy aktualne wektory z CameraControls
-				const pos = controls?.getPosition();
-				const tar = controls?.getTarget();
+		const vCam = new Vector3();
+		const vTarget = new Vector3();
+		const offset = 0.5;
 
-				// Formatujemy to jako gotowy fragment kodu
-				const codeSnippet = `position: [${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)}], 
-target: [${tar.x.toFixed(2)}, ${tar.y.toFixed(2)}, ${tar.z.toFixed(2)}]`;
+		// 1. Wyciągasz tablice współrzędnych z Twojego configu
+		const camCoords = value.part.position; // np. [2.34, 2.08, 2.12]
+		const targetCoords = value.part.target; // np. [0.03, 0.81, 0.08]
 
-				console.log('%c Nowe ustawienia kamery:', 'color: #00ff00; font-weight: bold;');
-				console.log(codeSnippet);
+		const distance = vCam.set(...camCoords).distanceTo(vTarget.set(...targetCoords));
 
-				// Opcjonalne kopiowanie do schowka
-				navigator.clipboard.writeText(codeSnippet);
-				alert('Skopiowano do schowka!');
-			});
+		if (controls) {
+			const currentAzimuth = controls.azimuthAngle;
+			const normalizedAzimuth = currentAzimuth % (Math.PI * 2);
 
-		const postProcessPane = pane.addTab({
-			pages: [{ title: 'Depth of Field' }, { title: 'Bloom' }]
-		});
+			controls.azimuthAngle = normalizedAzimuth;
+		}
 
-		postProcessPane.pages[0].addBinding(postProcessConfig.dof, 'focusDistance', {
-			min: -2,
-			max: 10,
-			step: 0.01
-		});
-		postProcessPane.pages[0].addBinding(postProcessConfig.dof, 'focalLength', {
-			min: 0,
-			max: 1,
-			step: 0.01
-		});
-		postProcessPane.pages[0].addBinding(postProcessConfig.dof, 'bokehScale', {
-			min: 0,
-			max: 10,
-			step: 0.01
-		});
-		postProcessPane.pages[0].addBinding(postProcessConfig.dof, 'focusRange', {
-			min: -2,
-			max: 10,
-			step: 0.01
-		});
-		postProcessPane.pages[1].addBinding(postProcessConfig.bloom, 'intensity', {
-			min: 0,
-			max: 10,
-			step: 0.01
-		});
-		postProcessPane.pages[1].addBinding(postProcessConfig.bloom, 'mipmapBlur');
-		postProcessPane.pages[1].addBinding(postProcessConfig.bloom, 'radius', {
-			min: 0,
-			max: 1,
-			step: 0.01
-		});
-		postProcessPane.pages[1].addBinding(postProcessConfig.bloom, 'luminanceThreshold', {
-			min: 0,
-			max: 100,
-			step: 0.01
-		});
-		postProcessPane.pages[1].addBinding(postProcessConfig.bloom, 'luminanceSmoothing', {
-			min: 0,
-			max: 1,
-			step: 0.01
+		gsap.to(postProcessConfig.dof, {
+			focalLength: 1,
+			focusDistance: distance - offset,
+			duration: 1,
+			ease: 'power2.out',
+			overwrite: true // Jeśli klikniesz coś innego w trakcie, stara animacja zostanie przerwana
 		});
 
-		return () => pane.dispose();
-	});
+		controls?.setLookAt(...camCoords, ...targetCoords, true);
+	};
+
+	export const getSelected = () => {
+		return selected;
+	};
+
+	export const setProductMaterial = ({ part, material }) => {
+		part.material = material;
+		part.color = material.color;
+	};
+
+	export const setProductMaterialColor = (color: string) => {
+		selected.part.color = color;
+	};
+
+	export const removeSelected = () => {
+		selected = null;
+		if (controls) {
+			const currentAzimuth = controls.azimuthAngle;
+			const normalizedAzimuth = currentAzimuth % (Math.PI * 2);
+
+			controls.azimuthAngle = normalizedAzimuth;
+			controls?.setLookAt(...DEFAULT_VIEW.position, ...DEFAULT_VIEW.target, true);
+		}
+
+		gsap.to(postProcessConfig.dof, {
+			focalLength: DEFAULT_VIEW.dof.focalLength,
+			focusDistance: DEFAULT_VIEW.dof.focusDistance,
+			duration: 1,
+			ease: 'power2.out',
+			overwrite: true // Jeśli klikniesz coś innego w trakcie, stara animacja zostanie przerwana
+		});
+	};
 </script>
+
+<script lang="ts">
+	import { Canvas } from '@threlte/core';
+	import Scene from '../components/Scene.svelte';
+	import { Studio } from '@threlte/studio';
+	import Renderer from '../components/Renderer.svelte';
+	import { Suspense, useProgress, type CameraControlsRef } from '@threlte/extras';
+
+	import { fade } from 'svelte/transition';
+	import { Vector3 } from 'three';
+	import Loader from './Loader.svelte';
+	import TweakPane from './TweakPane.svelte';
+	import ProductUI from './ProductUI.svelte';
+	import gsap from 'gsap';
+
+	let isStudio = $state(false);
+</script>
+
+<TweakPane {controls} {postProcessConfig} />
 
 <section>
 	<Loader />
 	<div class="canvas-wrapper" in:fade>
-		<div class="info">
-			{#if selected}
-				<div class="bot">
-					<div class="title">
-						<p>{selected?.model.displayName} - {selected?.part.displayName}</p>
-						<p>{selected?.part.description}</p>
-					</div>
-					<div class="options">
-						{#each selected.part.materials as material (material.id)}
-							<div>
-								<button
-									class={selected.part.material.id === material.id && 'selected'}
-									onclick={(e) => {
-										setProductMaterial({ part: selected.part, material });
-									}}
-									>{material.name}
-								</button>
-							</div>
-							{#if selected.part.material.id === material.id}
-								{#each selected.part.material.colors as color (color.id)}
-									<button
-										class={'color ' + (selected.part.color.id === color.id && 'selected')}
-										style="background-color: {color.color}"
-										onclick={() => {
-											setProductMaterialColor(color);
-										}}>X</button
-									>
-								{/each}
-							{/if}
-						{/each}
-						<button
-							onclick={() => {
-								selected = null;
-								if (controls) {
-									const currentAzimuth = controls.azimuthAngle;
-									const normalizedAzimuth = currentAzimuth % (Math.PI * 2);
-
-									controls.azimuthAngle = normalizedAzimuth;
-									controls?.setLookAt(...defaultCamParams);
-								}
-							}}>CLOSE</button
-						>
-					</div>
-				</div>
-			{/if}
-		</div>
+		<ProductUI />
 		<Canvas>
 			<!-- <Renderer /> -->
 			<Suspense>
@@ -209,7 +133,7 @@ target: [${tar.x.toFixed(2)}, ${tar.y.toFixed(2)}, ${tar.z.toFixed(2)}]`;
 </section>
 
 <style>
-	.section {
+	section {
 		position: relative;
 	}
 	.canvas-wrapper {
@@ -218,48 +142,5 @@ target: [${tar.x.toFixed(2)}, ${tar.y.toFixed(2)}, ${tar.z.toFixed(2)}]`;
 		width: 100%;
 		height: 100dvh;
 		background-color: white;
-	}
-	.info {
-		position: absolute;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		padding: 0;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
-		pointer-events: none;
-		z-index: 200;
-	}
-
-	.bot {
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-		place-self: end;
-		pointer-events: all;
-		padding: 2rem;
-	}
-
-	.title {
-		display: flex;
-		flex-direction: column;
-		background-color: white;
-		padding: 0.2rem;
-	}
-
-	.options {
-		display: flex;
-		gap: 1rem;
-	}
-
-	.color {
-		width: 20px;
-		height: 20px;
-	}
-
-	.selected {
-		outline: 2px solid green;
 	}
 </style>
