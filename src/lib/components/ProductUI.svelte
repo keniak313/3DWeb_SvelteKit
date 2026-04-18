@@ -15,6 +15,7 @@
 </script>
 
 <div class="info">
+	<div class="top">WORK IN PROGRESS</div>
 	<div class="left">
 		{#each Object.values(data) as item (item.id)}
 			<button onclick={() => setSelected({ model: item })}>{item.name}</button>
@@ -122,6 +123,12 @@
 		height: 100%;
 		pointer-events: none;
 		z-index: 200;
+	}
+
+	.top {
+		position: absolute;
+		top: 0;
+		padding: 1rem;
 	}
 
 	.left {
