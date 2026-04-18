@@ -56,13 +56,13 @@
 <AssetPreloader {data} />
 
 <EffectComposer multisampling={8}>
-	<DepthOfFieldEffect
+	<!-- <DepthOfFieldEffect
 		focusDistance={config.dof.focusDistance}
 		focalLength={config.dof.focalLength}
 		bokehScale={config.dof.bokehScale}
 		focusRange={config.dof.focusRange}
 		resolutionScale={1}
-	/>
+	/> -->
 	<BloomEffect
 		luminanceThreshold={config.bloom.luminanceThreshold}
 		luminanceSmoothing={config.bloom.luminanceSmoothing}

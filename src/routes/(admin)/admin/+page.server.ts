@@ -2,7 +2,7 @@ import { eq, getTableColumns, inArray, sql } from 'drizzle-orm';
 import { color, material, model, session, texture } from '$lib/server/db/schema.js';
 import { error, redirect } from '@sveltejs/kit';
 import { put } from '@vercel/blob';
-import { env } from '$env/dynamic/private';
+import { BLOB_READ_WRITE_TOKEN } from '$env/static/private';
 
 export const load = async ({ locals }) => {
 	const models = await locals.db.query.model.findMany();
@@ -162,39 +162,6 @@ export const actions = {
 				.onConflictDoUpdate({ target: model.id, set: updateFields });
 		}
 	},
-	upload: async ({ request, locals }) => {
-		const form = await request.formData();
-		const file = form.get('file') as File;
-
-		if (!file) {
-			throw error(400, { message: 'No file to upload.' });
-		}
-
-		const name = file.name.split('.')[0];
-
-		// check if model already exists
-		const existingModel = await locals.db.query.model.findFirst({
-			where: eq(model.name, name)
-		});
-
-		if (existingModel) {
-			throw error(400, { message: 'Model already exists.' });
-		}
-
-		const { url } = await put('models/' + file.name, file, {
-			access: 'public',
-			token: env.BLOB_READ_WRITE_TOKEN
-		});
-
-		await locals.db.insert(model).values({
-			name: name,
-			url: url,
-			parts: {}
-		});
-
-		console.log(url);
-		return { uploaded: url };
-	},
 	addModel: async ({ request, locals }) => {
 		const form = await request.formData();
 
@@ -213,7 +180,7 @@ export const actions = {
 
 		const { url } = await put('models/' + file.name, file, {
 			access: 'public',
-			token: env.BLOB_READ_WRITE_TOKEN,
+			token: BLOB_READ_WRITE_TOKEN,
 			allowOverwrite: true
 		});
 
