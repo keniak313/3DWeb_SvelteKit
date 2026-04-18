@@ -29,7 +29,7 @@ export const load = async ({ locals, url }) => {
 		const parts = Object.values(item.parts);
 		parts.forEach((part) => {
 			part.visible = true;
-			part.material = materials.find((material) => material.id === part.material); // Nie moge tutaj bezposrednio zmienic typu?
+			part.material = materials.find((material) => material.id === part.material);
 			part.color = colors.find((color) => color.id === part.color);
 			part.materials = part.materials?.map((mat) => {
 				return materials.find((material) => material.id === mat);

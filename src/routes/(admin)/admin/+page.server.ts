@@ -115,7 +115,6 @@ export const actions = {
 					name: formdata.get(`part-name-${id}`),
 					displayName: formdata.get(`part-displayName-${id}`),
 					description: formdata.get(`part-description-${id}`),
-					interactive: formdata.get(`part-interactive-${id}`) === 'on' ? true : false,
 					materials: formdata.getAll(`part-materials-${id}`),
 					material: formdata.get(`part-material-${id}`),
 					color: formdata.get(`part-color-${id}`),

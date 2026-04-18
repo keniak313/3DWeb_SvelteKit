@@ -68,8 +68,6 @@
 		}
 	});
 
-	console.log(loadedAssets.textures);
-
 	// loadedAssets.models = models.map((path) => ({
 	// 	asset: path.split('/').pop()?.split('.')[0],
 	// 	gltf: useGltf(asset(path))

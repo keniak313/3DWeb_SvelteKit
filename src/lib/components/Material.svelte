@@ -55,8 +55,5 @@
 		color={newColor}
 		aoMapIntensity={1}
 		needsUpdate={true}
-		oncreate={() => {
-			console.log(materialRef);
-		}}
 	/>
 {/if}

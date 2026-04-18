@@ -10,6 +10,7 @@
 	import TextureForm from '$lib/components/admin/TextureForm.svelte';
 	import MaterialsForm from '$lib/components/admin/MaterialsForm.svelte';
 	import ColorsForm from '$lib/components/admin/ColorsForm.svelte';
+	import Product from '$lib/components/Product.svelte';
 
 	let { data } = $props();
 

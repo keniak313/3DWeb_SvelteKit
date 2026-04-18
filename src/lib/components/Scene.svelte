@@ -124,7 +124,7 @@
 	{/if}
 {/each}
 
-<BakeShadows />
+<!-- <BakeShadows /> -->
 
 <GLTF
 	url="/3D/BG01.glb"

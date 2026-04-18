@@ -73,12 +73,6 @@
 									bind:value={part.description}
 								/>
 								<Input
-									id={'part-interactive-' + part.id}
-									title="Interactive"
-									type="checkbox"
-									bind:checked={part.interactive}
-								/>
-								<Input
 									id={'part-materials-' + part.id}
 									title="Available Materials"
 									type="select-multiple"
@@ -195,7 +189,6 @@
 						name: part.name,
 						displayName: '',
 						description: '',
-						interactive: false,
 						materials: [],
 						material: '',
 						color: '',
@@ -221,7 +214,6 @@
 							name: part.name,
 							displayName: '',
 							description: '',
-							interactive: false,
 							materials: [],
 							material: '',
 							color: '',

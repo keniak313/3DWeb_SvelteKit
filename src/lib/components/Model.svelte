@@ -45,13 +45,13 @@
 				position={[mesh.position.x, mesh.position.y, mesh.position.z]}
 				rotation={[mesh.rotation.x, mesh.rotation.y, mesh.rotation.z]}
 				scale={[mesh.scale.x, mesh.scale.y, mesh.scale.z]}
-				castShadow={part?.material?.transparent ? false : true}
-				receiveShadow
+				castShadow={true}
+				receiveShadow={true}
 				onpointerenter={onPointerEnter}
 				onpointerleave={onPointerLeave}
 				onclick={(e) => {
 					e.stopPropagation();
-					if (!part?.interactive) return;
+					if (!mesh.name.includes('use')) return;
 					setSelected({
 						model: model,
 						part: part,

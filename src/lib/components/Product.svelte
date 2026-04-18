@@ -32,7 +32,7 @@
 		const model = selected.model.name;
 		const parts = [];
 		Object.values(selected.model.parts).forEach((part) => {
-			if (part.interactive) {
+			if (part.name.includes('use')) {
 				parts.push({
 					name: part.name,
 					color: part.color.id,
@@ -110,6 +110,7 @@
 
 	export const setProductMaterialColor = (color: string) => {
 		selected.part.color = color;
+
 		setUrl();
 	};
 
@@ -168,7 +169,7 @@
 	});
 </script>
 
-<TweakPane {controls} {postProcessConfig} />
+<!-- <TweakPane {controls} {postProcessConfig} /> -->
 
 <section>
 	<Loader />
