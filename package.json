@@ -22,6 +22,7 @@
 		"@eslint/js": "^10.0.1",
 		"@libsql/client": "^0.17.2",
 		"@sveltejs/adapter-auto": "^7.0.1",
+		"@sveltejs/enhanced-img": "^0.10.4",
 		"@sveltejs/kit": "^2.57.0",
 		"@sveltejs/vite-plugin-svelte": "^7.0.0",
 		"@types/node": "^22",
@@ -44,11 +45,16 @@
 		"@threlte/extras": "^9.14.5",
 		"@threlte/gltf": "^3.0.7",
 		"@threlte/studio": "^0.4.3",
+		"@unpic/svelte": "^1.0.1",
+		"@vercel/blob": "^2.3.3",
 		"gsap": "^3.15.0",
 		"nanoid": "^5.1.7",
 		"postprocessing": "^6.39.0",
 		"three": "^0.183.2",
 		"threlte-postprocessing": "^0.0.10",
 		"tweakpane": "^4.0.5"
+	},
+	"overrides": {
+		"three": "^0.183.2"
 	}
 }

@@ -1,0 +1,120 @@
+<script lang="ts">
+	import { extend, T } from '@threlte/core';
+	import { Billboard, HTML, useCursor, useGltf, useTexture } from '@threlte/extras';
+	import Material from './Material.svelte';
+	import { getSelected, setSelected } from './Product.svelte';
+	// import { models } from '../utilities/data.svelte';
+	import { Color, MeshBasicMaterial, MeshStandardMaterial } from 'three';
+	import { fade, scale, slide } from 'svelte/transition';
+	import { onMount } from 'svelte';
+	import { MeshStandardNodeMaterial } from 'three/webgpu';
+	import { asset } from '$app/paths';
+	import { getLoadedAssets } from './AssetPreloader.svelte';
+	import gsap from 'gsap';
+
+	let { model } = $props();
+
+	const gltf = $derived.by(() => {
+		return getLoadedAssets().models[model.name];
+	});
+
+	const { onPointerEnter, onPointerLeave } = useCursor('pointer');
+
+	const pointerEnter = (e) => {
+		e.stopPropagation();
+		onPointerEnter();
+
+		e.object.material.emissiveIntensity = 1;
+		e.object.material.emissive = new Color('white');
+	};
+	const pointerLeave = (e) => {
+		e.stopPropagation();
+		onPointerLeave();
+
+		e.object.material.emissiveIntensity = 0;
+	};
+</script>
+
+{#if $gltf}
+	<T.Group>
+		{#each $gltf.nodes[model.name].children as mesh, index (mesh.uuid)}
+			{@const part = model.parts[mesh.name]}
+			<T.Mesh
+				name={mesh.name}
+				geometry={mesh.geometry}
+				position={[mesh.position.x, mesh.position.y, mesh.position.z]}
+				rotation={[mesh.rotation.x, mesh.rotation.y, mesh.rotation.z]}
+				scale={[mesh.scale.x, mesh.scale.y, mesh.scale.z]}
+				castShadow={part?.material?.transparent ? false : true}
+				receiveShadow
+				onpointerenter={onPointerEnter}
+				onpointerleave={onPointerLeave}
+				onclick={(e) => {
+					e.stopPropagation();
+					if (!part?.interactive) return;
+					setSelected({
+						model: model,
+						part: part,
+						mesh: mesh
+					});
+				}}
+			>
+				{#if part?.material}
+					<Material material={part.material} modelName={model.name} setColor={part.color} />
+				{:else}
+					<T.MeshStandardMaterial color="red" />
+				{/if}
+				<!-- {#each mesh.children as child (child.uuid)}
+					<HTML
+						position={[child.position.x, child.position.y, child.position.z]}
+						occlude
+						pointerEvents="all"
+						onvisibilitychange={(e) => {
+							part.visible = e;
+						}}
+					>
+						{#if part.visible}
+							<div class="info" transition:fade>
+								<button
+									onclick={(e) => {
+										setSelected({
+											model: model,
+											part: model.parts[mesh.name],
+											mesh: mesh
+										});
+									}}
+								>
+								</button>
+								{#if getSelected()?.part?.name === mesh.name}
+									<div class="description" transition:slide>
+										<p>{part.description}</p>
+									</div>
+								{/if}
+							</div>
+						{/if}
+					</HTML>
+				{/each} -->
+			</T.Mesh>
+		{/each}
+	</T.Group>
+{/if}
+
+<style>
+	.info {
+		opacity: 0.5;
+	}
+	.description {
+		display: flex;
+		width: fit-content;
+		background-color: rgb(212, 212, 212);
+	}
+	button {
+		width: 20px;
+		height: 20px;
+		border-radius: 50%;
+		outline: none;
+		border: none;
+		background-color: rgb(212, 212, 212);
+		cursor: pointer;
+	}
+</style>

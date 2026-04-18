@@ -1,0 +1,268 @@
+import { eq, getTableColumns, inArray, sql } from 'drizzle-orm';
+import { color, material, model, session, texture } from '$lib/server/db/schema.js';
+import { error, redirect } from '@sveltejs/kit';
+import { put } from '@vercel/blob';
+import { env } from '$env/dynamic/private';
+
+export const load = async ({ locals }) => {
+	const models = await locals.db.query.model.findMany();
+	const colors = await locals.db.query.color.findMany();
+	const materials = await locals.db.query.material.findMany();
+	const textures = await locals.db.query.texture.findMany();
+
+	return { models, materials, colors, textures };
+};
+
+export const actions = {
+	logout: async ({ locals, cookies }) => {
+		console.log('logout action');
+		const sessionId = cookies.get('session_auth');
+		if (sessionId) {
+			await locals.db.delete(session).where(eq(session.id, sessionId));
+		}
+		cookies.delete('session_auth', { path: '/' });
+
+		throw redirect(303, '/login');
+	},
+	updateColors: async ({ locals, request }) => {
+		const formData = await request.formData();
+		const ids = formData.getAll('id');
+		const newColors = ids.map((id) => {
+			return {
+				id: id,
+				color: formData.get(`color-${id}`),
+				displayName: formData.get(`displayName-${id}`),
+				name: formData.get(`name-${id}`)
+			};
+		});
+
+		console.log(formData);
+
+		const columns = getTableColumns(color);
+		const updateFields = Object.fromEntries(
+			Object.entries(columns)
+				.filter(([key]) => key !== 'id')
+				.map(([key, column]) => [
+					key,
+					// Używamy column.name, aby dostać czysty string nazwy kolumny w SQL
+					sql.raw(`excluded.${column.name}`)
+				])
+		);
+
+		if (newColors.length > 0) {
+			await locals.db
+				.insert(color)
+				.values(newColors)
+				.onConflictDoUpdate({ target: color.id, set: updateFields });
+		}
+	},
+	updateMaterials: async ({ locals, request }) => {
+		const formData = await request.formData();
+		const ids = formData.getAll('id');
+
+		const newMaterials = ids.map((id) => {
+			return {
+				id: id,
+				name: formData.get(`name-${id}`),
+				displayName: formData.get(`displayName-${id}`),
+				description: formData.get(`description-${id}`),
+				metalness: Number(formData.get(`metalness-${id}`)),
+				roughness: Number(formData.get(`roughness-${id}`)),
+				transparent: formData.get(`transparent-${id}`) === 'on' ? 1 : 0,
+				opacity: Number(formData.get(`opacity-${id}`)),
+				color: formData.get(`color-${id}`),
+				colors: formData.getAll(`colors-${id}`)
+			};
+		});
+
+		const columns = getTableColumns(material);
+		const updateFields = Object.fromEntries(
+			Object.entries(columns)
+				.filter(([key]) => key !== 'id')
+				.map(([key, column]) => [
+					key,
+					// Używamy column.name, aby dostać czysty string nazwy kolumny w SQL
+					sql.raw(`excluded.${column.name}`)
+				])
+		);
+
+		if (newMaterials.length > 0) {
+			await locals.db
+				.insert(material)
+				.values(newMaterials)
+				.onConflictDoUpdate({ target: material.id, set: updateFields });
+
+			console.log(newMaterials);
+		}
+	},
+	updateModels: async ({ locals, request }) => {
+		const formdata = await request.formData();
+		const ids = formdata.getAll('id');
+
+		const partsIds = formdata.getAll('partId');
+
+		const newParts = {};
+
+		ids.forEach((id) => {
+			newParts[id] = {};
+		});
+
+		partsIds.forEach((id) => {
+			newParts[formdata.get(`part-modelId-${id}`)] = {
+				...newParts[formdata.get(`part-modelId-${id}`)],
+				[formdata.get(`part-name-${id}`)]: {
+					id: id,
+					name: formdata.get(`part-name-${id}`),
+					displayName: formdata.get(`part-displayName-${id}`),
+					description: formdata.get(`part-description-${id}`),
+					interactive: formdata.get(`part-interactive-${id}`) === 'on' ? true : false,
+					materials: formdata.getAll(`part-materials-${id}`),
+					material: formdata.get(`part-material-${id}`),
+					color: formdata.get(`part-color-${id}`),
+					position: [
+						Number(formdata.get(`part-position-x-${id}`)),
+						Number(formdata.get(`part-position-y-${id}`)),
+						Number(formdata.get(`part-position-z-${id}`))
+					],
+					target: [
+						Number(formdata.get(`part-target-x-${id}`)),
+						Number(formdata.get(`part-target-y-${id}`)),
+						Number(formdata.get(`part-target-z-${id}`))
+					]
+				}
+			};
+		});
+
+		const newModels = ids.map((id) => {
+			return {
+				id: id,
+				name: formdata.get(`name-${id}`),
+				displayName: formdata.get(`displayName-${id}`),
+				description: formdata.get(`description-${id}`),
+				url: formdata.get(`url-${id}`),
+				parts: newParts[id]
+			};
+		});
+
+		const columns = getTableColumns(model);
+		const updateFields = Object.fromEntries(
+			Object.entries(columns)
+				.filter(([key]) => key !== 'id')
+				.map(([key, column]) => [
+					key,
+					// Używamy column.name, aby dostać czysty string nazwy kolumny w SQL
+					sql.raw(`excluded.${column.name}`)
+				])
+		);
+
+		if (newModels.length > 0) {
+			await locals.db
+				.insert(model)
+				.values(newModels)
+				.onConflictDoUpdate({ target: model.id, set: updateFields });
+		}
+	},
+	upload: async ({ request, locals }) => {
+		const form = await request.formData();
+		const file = form.get('file') as File;
+
+		if (!file) {
+			throw error(400, { message: 'No file to upload.' });
+		}
+
+		const name = file.name.split('.')[0];
+
+		// check if model already exists
+		const existingModel = await locals.db.query.model.findFirst({
+			where: eq(model.name, name)
+		});
+
+		if (existingModel) {
+			throw error(400, { message: 'Model already exists.' });
+		}
+
+		const { url } = await put('models/' + file.name, file, {
+			access: 'public',
+			token: env.BLOB_READ_WRITE_TOKEN
+		});
+
+		await locals.db.insert(model).values({
+			name: name,
+			url: url,
+			parts: {}
+		});
+
+		console.log(url);
+		return { uploaded: url };
+	},
+	addModel: async ({ request, locals }) => {
+		const form = await request.formData();
+
+		const file = form.get('file') as File;
+		const modelInfo = JSON.parse(form.get('modelInfo') as string);
+
+		if (!file) {
+			throw error(400, { message: 'No file to upload.' });
+		}
+
+		const name = file.name.split('.')[0];
+
+		const existingModel = await locals.db.query.model.findFirst({
+			where: eq(model.name, name)
+		});
+
+		const { url } = await put('models/' + file.name, file, {
+			access: 'public',
+			token: env.BLOB_READ_WRITE_TOKEN,
+			allowOverwrite: true
+		});
+
+		if (existingModel) {
+			await locals.db
+				.update(model)
+				.set({
+					name: modelInfo.name,
+					displayName: modelInfo.displayName,
+					description: modelInfo.description,
+					url: modelInfo.url,
+					parts: modelInfo.parts
+				})
+				.where(eq(model.id, modelInfo.id));
+		} else {
+			await locals.db.insert(model).values({
+				name: modelInfo.name,
+				displayName: modelInfo.displayName,
+				description: modelInfo.description,
+				url: url,
+				parts: modelInfo.parts
+			});
+		}
+
+		const models = await locals.db.query.model.findMany({});
+
+		return { models };
+	},
+	addTexture: async ({ request, locals }) => {
+		const formData = await request.formData();
+
+		const newTextures = formData.getAll('texture');
+
+		for (const tx of newTextures) {
+			const name = tx.name.split('.')[0];
+			const { url } = await put('textures/' + tx.name, tx, {
+				access: 'public',
+				token: env.BLOB_READ_WRITE_TOKEN,
+				allowOverwrite: true
+			});
+
+			await locals.db.insert(texture).values({
+				name: name,
+				url: url
+			});
+		}
+
+		const textures = await locals.db.query.texture.findMany({});
+
+		return { textures };
+	}
+};
