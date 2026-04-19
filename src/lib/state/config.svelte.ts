@@ -2,8 +2,12 @@ import type { CameraControlsRef } from '@threlte/extras';
 import { SvelteMap } from 'svelte/reactivity';
 
 export const createConfig = (initData) => {
+	const configData = initData.config.settings;
+
 	const sceneConfig = $state({
-		controls: null as CameraControlsRef
+		controls: null as CameraControlsRef,
+		defaultCameraPosition: configData.defaultCameraPosition,
+		defaultCameraTarget: configData.defaultCameraTarget
 	});
 
 	const selected = $state({
@@ -66,6 +70,12 @@ export const createConfig = (initData) => {
 			const part = model.parts[selected.partName];
 
 			sceneConfig.controls?.setLookAt(...part.position, ...part.target, true);
+		} else {
+			sceneConfig.controls?.setLookAt(
+				...sceneConfig.defaultCameraPosition,
+				...sceneConfig.defaultCameraTarget,
+				true
+			);
 		}
 	}
 
@@ -88,7 +98,11 @@ export const createConfig = (initData) => {
 	function clearPart() {
 		selected.partName = null;
 
-		sceneConfig.controls?.setLookAt(2.31, 1.43, 2.96, 0, 0.8, 0, true);
+		sceneConfig.controls?.setLookAt(
+			...sceneConfig.defaultCameraPosition,
+			...sceneConfig.defaultCameraTarget,
+			true
+		);
 	}
 
 	function setPosTargetFromCamera({ partName }) {

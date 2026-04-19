@@ -84,7 +84,7 @@ export const config = sqliteTable('config', {
 		.primaryKey()
 		.$defaultFn(() => nanoid(10)),
 	name: text('name').notNull(),
-	config: text('config', { mode: 'json' })
+	settings: text('settings', { mode: 'json' })
 });
 
 export type Model = InferSelectModel<typeof model>;

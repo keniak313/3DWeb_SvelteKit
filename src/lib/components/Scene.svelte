@@ -79,7 +79,11 @@
 	<CameraControls
 		bind:ref={config.sceneConfig.controls}
 		oncreate={(ref) => {
-			ref.setLookAt(2.31, 1.43, 2.96, 0, 0.8, 0, true);
+			ref.setLookAt(
+				...config.sceneConfig.defaultCameraPosition,
+				...config.sceneConfig.defaultCameraTarget,
+				true
+			);
 		}}
 		maxPolarAngle={Math.PI / 2}
 		minPolarAngle={Math.PI / 5}

@@ -34,9 +34,9 @@
 	const { id, color, colors, defaultColor, ...matConfig } = $derived(material);
 	const newColor = $derived.by(() => {
 		if (setColor) {
-			return new Color(setColor.color);
+			return setColor.color;
 		}
-		return new Color(color.color);
+		return color.color;
 	});
 </script>
 
