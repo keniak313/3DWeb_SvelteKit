@@ -65,7 +65,7 @@ export const createConfig = (initData) => {
 			const model = models.find((m) => m.name === selected.modelName);
 			const part = model.parts[selected.partName];
 
-			camControls.controls?.setLookAt(...part.position, ...part.target, true);
+			sceneConfig.controls?.setLookAt(...part.position, ...part.target, true);
 		}
 	}
 
