@@ -2,7 +2,7 @@ import type { CameraControlsRef } from '@threlte/extras';
 import { SvelteMap } from 'svelte/reactivity';
 
 export const createConfig = (initData) => {
-	const camControls = $state({
+	const sceneConfig = $state({
 		controls: null as CameraControlsRef
 	});
 
@@ -88,12 +88,12 @@ export const createConfig = (initData) => {
 	function clearPart() {
 		selected.partName = null;
 
-		camControls.controls?.setLookAt(2.31, 1.43, 2.96, 0, 0.8, 0, true);
+		sceneConfig.controls?.setLookAt(2.31, 1.43, 2.96, 0, 0.8, 0, true);
 	}
 
 	function setPosTargetFromCamera({ partName }) {
-		const position = camControls.controls?.getPosition();
-		const target = camControls.controls?.getTarget();
+		const position = sceneConfig.controls?.getPosition();
+		const target = sceneConfig.controls?.getTarget();
 		console.log(position);
 		console.log(target);
 
@@ -132,7 +132,7 @@ export const createConfig = (initData) => {
 		get selectedAsset() {
 			return selectedAsset;
 		},
-		camControls,
+		sceneConfig,
 		setSelected,
 		setAssetMaterial,
 		setAssetColor,
