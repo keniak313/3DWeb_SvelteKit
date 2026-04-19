@@ -33,7 +33,6 @@
 
 	const { id, color, colors, defaultColor, ...matConfig } = $derived(material);
 	const newColor = $derived.by(() => {
-		console.log('SET COLOR?', setColor);
 		if (setColor) {
 			return new Color(setColor.color);
 		}
@@ -56,5 +55,11 @@
 		color={newColor}
 		aoMapIntensity={1}
 		needsUpdate={true}
+		oncreate={(ref) => {
+			$effect(() => {
+				ref.transparent = material.transparent;
+				ref.needsUpdate = true;
+			});
+		}}
 	/>
 {/if}

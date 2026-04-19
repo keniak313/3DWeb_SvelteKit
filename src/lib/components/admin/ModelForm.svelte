@@ -97,6 +97,13 @@
 										type="select-multiple"
 										data={materials}
 										bind:value={part.materials}
+										onchange={() => {
+											console.log('XX', part.materials);
+											if (part.materials.length <= 1) {
+												part.material = part.materials[0];
+												part.color = materials.find((m) => m.id === part.material)?.colors[0];
+											}
+										}}
 									/>
 									<Input
 										id={'part-material-' + part.id}
