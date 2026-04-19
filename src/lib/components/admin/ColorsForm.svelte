@@ -3,10 +3,10 @@
 	import { nanoid } from '$lib/utilities/helpers';
 	import Input from '../Input.svelte';
 
-	let { colors = $bindable() } = $props();
+	let { colors } = $props();
 </script>
 
-<div>
+<div class="wrapper">
 	<h2>Colors</h2>
 	<hr />
 	<form
@@ -20,10 +20,24 @@
 	>
 		<div class="colors">
 			{#each colors as color (color.id)}
-				<Input id="id" value={color.id} hidden style="display: none;" />
-				<Input id={'color-' + color.id} bind:value={color.color} type="color" />
-				<Input id={'displayName-' + color.id} bind:value={color.displayName} type="text" />
-				<Input id={'name-' + color.id} bind:value={color.name} type="text" />
+				<div class="color">
+					<Input id="id" value={color.id} hidden style="display: none;" />
+					<Input
+						id={'color-' + color.id}
+						bind:value={color.color}
+						type="color"
+						style="width: 50px !important;"
+					/>
+					<div class="color-info">
+						<Input
+							id={'displayName-' + color.id}
+							title="Display Name"
+							bind:value={color.displayName}
+							type="text"
+						/>
+						<Input id={'name-' + color.id} title="Name" bind:value={color.name} type="text" />
+					</div>
+				</div>
 			{/each}
 		</div>
 
@@ -44,8 +58,21 @@
 
 <style>
 	.colors {
-		display: grid;
-		grid-template-columns: 50px 1fr 1fr;
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.color {
+		display: flex;
 		gap: 0.5rem;
+		width: 100%;
+		padding-bottom: 1rem;
+	}
+
+	.color-info {
+		display: flex;
+		flex-direction: column;
+		width: 100%;
 	}
 </style>

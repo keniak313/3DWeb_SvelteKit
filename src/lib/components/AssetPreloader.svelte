@@ -16,17 +16,17 @@
 
 <script lang="ts">
 	import { useGltf, useProgress, useTexture } from '@threlte/extras';
-	import { onMount } from 'svelte';
+	import { getContext, onMount } from 'svelte';
 	import { EquirectangularReflectionMapping, LinearSRGBColorSpace, RepeatWrapping } from 'three';
 	import { HDRLoader } from 'three/examples/jsm/Addons.js';
 	import { asset } from '$app/paths';
 
-	let { data } = $props();
+	const config = getContext('config');
+
+	const models = config.modelsHydrated;
+	const textures = config.textures;
 
 	// const models = ['/3D/Watch01/Watch01.glb', `/3D/Box01/Box01.glb`, '/3D/BG01.glb'];
-	const models = Object.values(data.models);
-
-	const textures = data.textures;
 
 	// const textures = [
 	// 	'/Textures/default.png',
@@ -36,7 +36,7 @@
 	// 	'/Textures/steel_DF.png'
 	// ];
 
-	loadedAssets.models = models.reduce((acc, model) => {
+	loadedAssets.models = Object.values(models).reduce((acc, model) => {
 		acc[model.name] = useGltf(model.url);
 		return acc;
 	}, {});

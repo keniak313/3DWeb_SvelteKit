@@ -36,7 +36,12 @@
 	label {
 		display: flex;
 		flex-direction: column;
+		width: 100%;
+		font-size: 0.7rem;
+	}
 
-		padding: 0.2rem;
+	input,
+	select {
+		width: 100%;
 	}
 </style>

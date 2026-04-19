@@ -1,24 +1,22 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { getContext } from 'svelte';
 	import Input from './Input.svelte';
-	import {
-		getSelected,
-		removeSelectedPart,
-		setProductMaterial,
-		setProductMaterialColor,
-		setSelected
-	} from './Product.svelte';
 
-	let selected = $derived(getSelected());
+	const config = getContext('config');
 
-	let { data, user } = $props();
+	let selected = $derived(config.selectedAsset);
+
+	const models = config.modelsHydrated;
+
+	let user = false;
 </script>
 
 <div class="info">
 	<div class="top">WORK IN PROGRESS</div>
 	<div class="left">
-		{#each Object.values(data) as item (item.id)}
-			<button onclick={() => setSelected({ model: item })}>{item.name}</button>
+		{#each Object.values(models) as model (model.id)}
+			<button onclick={() => config.setSelected({ modelName: model.name })}>{model.name}</button>
 		{/each}
 	</div>
 	{#if selected?.part}
@@ -87,7 +85,8 @@
 						<button
 							class={selected.part.material.id === material.id && 'selected'}
 							onclick={(e) => {
-								setProductMaterial({ part: selected.part, material });
+								// setProductMaterial({ part: selected.part, material });
+								config.setAssetMaterial({ materialId: material.id });
 							}}
 							>{material.name}
 						</button>
@@ -98,13 +97,14 @@
 								class={'color ' + (selected.part.color.id === color.id && 'selected')}
 								style="background-color: {color.color}"
 								onclick={() => {
-									setProductMaterialColor(color);
+									// setProductMaterialColor(color);
+									config.setAssetColor({ colorId: color.id });
 								}}>X</button
 							>
 						{/each}
 					{/if}
 				{/each}
-				<button onclick={removeSelectedPart}>CLOSE</button>
+				<button onclick={() => config.clearPart()}>CLOSE</button>
 			</div>
 		</div>
 	{/if}

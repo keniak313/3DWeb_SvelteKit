@@ -1,22 +1,16 @@
 <script lang="ts">
-	import { extend, T } from '@threlte/core';
-	import { Billboard, HTML, useCursor, useGltf, useTexture } from '@threlte/extras';
+	import { T } from '@threlte/core';
+	import { useCursor } from '@threlte/extras';
 	import Material from './Material.svelte';
-	import { getSelected, setSelected } from './Product.svelte';
-	// import { models } from '../utilities/data.svelte';
-	import { Color, MeshBasicMaterial, MeshStandardMaterial } from 'three';
-	import { fade, scale, slide } from 'svelte/transition';
-	import { onMount } from 'svelte';
-	import { MeshStandardNodeMaterial } from 'three/webgpu';
-	import { asset } from '$app/paths';
+	import { Color } from 'three';
+	import { getContext } from 'svelte';
 	import { getLoadedAssets } from './AssetPreloader.svelte';
-	import gsap from 'gsap';
 
 	let { model } = $props();
 
-	const gltf = $derived.by(() => {
-		return getLoadedAssets().models[model.name];
-	});
+	const config = getContext('config');
+
+	const gltf = $derived(getLoadedAssets().models[model.name]);
 
 	const { onPointerEnter, onPointerLeave } = useCursor('pointer');
 
@@ -52,17 +46,16 @@
 				onclick={(e) => {
 					e.stopPropagation();
 					if (!mesh.name.includes('use')) return;
-					setSelected({
-						model: model,
-						part: part,
-						mesh: mesh
+					config.setSelected({
+						modelName: model.name,
+						partName: part.name
 					});
 				}}
 			>
 				{#if part?.material}
 					<Material material={part.material} modelName={model.name} setColor={part.color} />
 				{:else}
-					<T.MeshStandardMaterial color="red" />
+					<T.MeshBasicMaterial color="magenta" />
 				{/if}
 				<!-- {#each mesh.children as child (child.uuid)}
 					<HTML

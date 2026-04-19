@@ -75,6 +75,14 @@ export const session = sqliteTable('session', {
 		.default(sql`CURRENT_TIMESTAMP`)
 });
 
+export const config = sqliteTable('config', {
+	id: text('id')
+		.primaryKey()
+		.$defaultFn(() => nanoid(10)),
+	name: text('name').notNull(),
+	config: text('config', { mode: 'json' })
+});
+
 export type Model = InferSelectModel<typeof model>;
 export type Texture = InferSelectModel<typeof texture>;
 export type Material = InferSelectModel<typeof material>;

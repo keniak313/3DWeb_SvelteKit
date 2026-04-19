@@ -3,7 +3,7 @@
 	import Input from '../Input.svelte';
 	import { Image } from '@unpic/svelte';
 
-	let { textures = $bindable() } = $props();
+	let { textures } = $props();
 </script>
 
 <div>

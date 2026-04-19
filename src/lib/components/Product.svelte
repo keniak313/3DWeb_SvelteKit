@@ -1,4 +1,4 @@
-<script module>
+<!-- <script module>
 	let selected = $state();
 	let controls = $state<CameraControlsRef>();
 	let dofTarget = $state(new Vector3(0, 0, 0));
@@ -47,9 +47,10 @@
 		goto(`?item=${url}`);
 	};
 
-	export const setSelected = (value: string) => {
+	export const setSelected = (value) => {
 		selected = value;
-		setUrl(value);
+		console.log('SEL', selected);
+		// setUrl(value);
 
 		if (!value.part) {
 			if (controls) {
@@ -132,41 +133,31 @@
 			overwrite: true
 		});
 	};
-</script>
+</script> -->
 
 <script lang="ts">
 	import { Canvas } from '@threlte/core';
 	import Scene from '../components/Scene.svelte';
 	import { Studio } from '@threlte/studio';
-	import Renderer from '../components/Renderer.svelte';
-	import { Suspense, useProgress, type CameraControlsRef } from '@threlte/extras';
+
+	import { Suspense } from '@threlte/extras';
 
 	import { fade } from 'svelte/transition';
-	import { Vector3 } from 'three';
 	import Loader from './Loader.svelte';
-	import TweakPane from './TweakPane.svelte';
 	import ProductUI from './ProductUI.svelte';
-	import gsap from 'gsap';
-	import { goto } from '$app/navigation';
-	import { decodeConfig, encodeConfig } from '../utilities/helpers';
-	import { onMount } from 'svelte';
 	import { page } from '$app/state';
-
-	let { data } = $props();
-
-	let models = $state(data.models);
 
 	let isStudio = $state(false);
 
 	const urlItem = $derived(page.url.searchParams.get('item'));
-	onMount(() => {
-		if (urlItem) {
-			const decoded = decodeConfig(urlItem);
-			setSelected({
-				model: models[decoded.model]
-			});
-		}
-	});
+	// onMount(() => {
+	// 	if (urlItem) {
+	// 		const decoded = decodeConfig(urlItem);
+	// 		setSelected({
+	// 			model: models[decoded.model]
+	// 		});
+	// 	}
+	// });
 </script>
 
 <!-- <TweakPane {controls} {postProcessConfig} /> -->
@@ -174,17 +165,17 @@
 <section>
 	<Loader />
 	<div class="canvas-wrapper" in:fade>
-		<ProductUI data={models} user={data.user} />
+		<ProductUI />
 
 		<Canvas>
 			<!-- <Renderer config={postProcessConfig} /> -->
 			<Suspense>
 				{#if isStudio}
 					<Studio>
-						<Scene bind:controls config={postProcessConfig} {models} {data} />
+						<Scene />
 					</Studio>
 				{:else}
-					<Scene bind:controls config={postProcessConfig} {models} {data} />
+					<Scene />
 				{/if}
 			</Suspense>
 		</Canvas>
@@ -198,7 +189,7 @@
 	.canvas-wrapper {
 		position: relative;
 		display: flex;
-		width: 100%;
+		/* width: 100%; */
 		height: 100dvh;
 		background-color: white;
 	}

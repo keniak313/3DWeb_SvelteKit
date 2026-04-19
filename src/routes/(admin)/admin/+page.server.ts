@@ -4,15 +4,6 @@ import { error, redirect } from '@sveltejs/kit';
 import { put } from '@vercel/blob';
 import { BLOB_READ_WRITE_TOKEN } from '$env/static/private';
 
-export const load = async ({ locals }) => {
-	const models = await locals.db.query.model.findMany();
-	const colors = await locals.db.query.color.findMany();
-	const materials = await locals.db.query.material.findMany();
-	const textures = await locals.db.query.texture.findMany();
-
-	return { models, materials, colors, textures };
-};
-
 export const actions = {
 	logout: async ({ locals, cookies }) => {
 		console.log('logout action');
@@ -159,7 +150,11 @@ export const actions = {
 				.insert(model)
 				.values(newModels)
 				.onConflictDoUpdate({ target: model.id, set: updateFields });
+
+			console.log(newModels);
 		}
+
+		return { success: true };
 	},
 	addModel: async ({ request, locals }) => {
 		const form = await request.formData();
@@ -204,9 +199,7 @@ export const actions = {
 			});
 		}
 
-		const models = await locals.db.query.model.findMany({});
-
-		return { models };
+		return { success: true, path: '/admin' };
 	},
 	addTexture: async ({ request, locals }) => {
 		const formData = await request.formData();

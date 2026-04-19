@@ -1,40 +1,66 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import Input from '$lib/components/Input.svelte';
-	import { useGltf } from '@threlte/extras';
-	import { customAlphabet } from 'nanoid';
-	import { GLTFLoader } from 'three/examples/jsm/Addons.js';
-	import { Image } from '@unpic/svelte';
-	import ModelForm from '$lib/components/admin/ModelForm.svelte';
-	import { nanoid } from '$lib/utilities/helpers.js';
-	import TextureForm from '$lib/components/admin/TextureForm.svelte';
-	import MaterialsForm from '$lib/components/admin/MaterialsForm.svelte';
 	import ColorsForm from '$lib/components/admin/ColorsForm.svelte';
+	import MaterialsForm from '$lib/components/admin/MaterialsForm.svelte';
+	import ModelForm from '$lib/components/admin/ModelForm.svelte';
+	import TextureForm from '$lib/components/admin/TextureForm.svelte';
 	import Product from '$lib/components/Product.svelte';
+	import { getContext } from 'svelte';
 
-	let { data } = $props();
+	const config = getContext('config');
 
-	let colors = $state(data.colors);
-	let materials = $state(data.materials);
-	let models = $state(data.models);
-	let textures = $state(data.textures);
+	let selectedMenu = $state();
 </script>
 
 <div class="wrapper">
-	<ColorsForm bind:colors />
-	<MaterialsForm bind:materials {colors} />
-	<TextureForm bind:textures />
-	<ModelForm bind:models {materials} {colors} />
-
-	<form method="POST" action="?/logout" use:enhance>
-		<button>WYLOGUJ</button>
-	</form>
+	<Product />
+	<div class="forms">
+		<div class="nav">
+			<button onclick={() => (selectedMenu = 'colors')}>Colors</button>
+			<button onclick={() => (selectedMenu = 'materials')}>Materials</button>
+			<button onclick={() => (selectedMenu = 'textures')}>Textures</button>
+			<button onclick={() => (selectedMenu = 'models')}>Models</button>
+			<form method="POST" action="?/logout" use:enhance>
+				<button>WYLOGUJ</button>
+			</form>
+		</div>
+		{#if selectedMenu === 'colors'}
+			<ColorsForm colors={config.colors} />
+		{/if}
+		{#if selectedMenu === 'materials'}
+			<MaterialsForm materials={config.materials} colors={config.colors} />
+		{/if}
+		{#if selectedMenu === 'textures'}
+			<TextureForm textures={config.textures} />
+		{/if}
+		{#if selectedMenu === 'models'}
+			<ModelForm models={config.models} materials={config.materials} colors={config.colors} />
+		{/if}
+	</div>
 </div>
 
 <style>
 	.wrapper {
+		position: relative;
+		overflow: hidden;
+		display: flex;
+		width: 100%;
+	}
+	.nav {
+		display: flex;
+		width: 100%;
+		gap: 0.2rem;
+	}
+	.forms {
+		width: 350px;
+		height: 100vh;
+		top: 0;
+		right: 0;
 		display: flex;
 		flex-direction: column;
-		gap: 2rem;
+		gap: 1rem;
+		overflow-y: auto;
+		padding: 0.5rem;
+		background-color: white;
 	}
 </style>

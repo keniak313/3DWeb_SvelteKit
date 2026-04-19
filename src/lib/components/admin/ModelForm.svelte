@@ -3,8 +3,11 @@
 	import { GLTFLoader } from 'three/examples/jsm/Addons.js';
 	import Input from '../Input.svelte';
 	import { nanoid } from '$lib/utilities/helpers';
+	import { goto } from '$app/navigation';
+	import { useThrelte } from '@threlte/core';
+	import { getContext } from 'svelte';
 
-	let { models = $bindable(), materials, colors } = $props();
+	let { models, materials, colors } = $props();
 
 	let modelExists = $state(false);
 
@@ -12,6 +15,9 @@
 	let modelAction = $derived(modelExists ? '?/updateModel' : '?/addModel');
 
 	let selectedModel = $state({ id: null });
+	let selecedPart = $state({ id: null });
+
+	const config = getContext('config');
 </script>
 
 <div>
@@ -41,7 +47,7 @@
 			}}
 		>
 			{#each models as model (model.id)}
-				{#if selectedModel.id === model.id}
+				<div class={selectedModel.id === model.id ? '' : 'hidden'}>
 					<Input id="id" value={model.id} hidden />
 					<Input id={'name-' + model.id} title="Name" bind:value={model.name} />
 					<Input id={'url-' + model.id} title="URL" bind:value={model.url} />
@@ -57,103 +63,125 @@
 					/>
 					<div class="parts">
 						<p>Parts:</p>
+						{#each Object.values(model.parts) as part (part.id)}
+							<button
+								type="button"
+								onclick={() => {
+									if (selecedPart.id === part.id) {
+										selecedPart.id = null;
+									} else {
+										selecedPart.id = part.id;
+									}
+								}}>{part.name}</button
+							>
+						{/each}
 						{#if model.parts}
 							{#each Object.values(model.parts) as part (part.id)}
-								<Input id="partId" value={part.id} hidden />
-								<Input id={'part-modelId-' + part.id} value={model.id} hidden />
-								<Input id={'part-name-' + part.id} title="Name" bind:value={part.name} />
-								<Input
-									id={'part-displayName-' + part.id}
-									title="Display Name"
-									bind:value={part.displayName}
-								/>
-								<Input
-									id={'part-description-' + part.id}
-									title="Description"
-									bind:value={part.description}
-								/>
-								<Input
-									id={'part-materials-' + part.id}
-									title="Available Materials"
-									type="select-multiple"
-									data={materials}
-									bind:value={part.materials}
-								/>
-								<Input
-									id={'part-material-' + part.id}
-									title="Default Material"
-									type="select"
-									data={part.materials.map((material) => {
-										return materials.find((m) => m.id === material);
-									})}
-									bind:value={part.material}
-								/>
-								<Input
-									id={'part-color-' + part.id}
-									title="Default Color"
-									type="select"
-									data={materials
-										?.find((m) => m.id === part.material)
-										?.colors?.map((color) => {
-											return colors?.find((c) => c.id === color);
+								<div class={selecedPart.id === part.id ? '' : 'hidden'}>
+									<Input id="partId" value={part.id} hidden />
+									<Input id={'part-modelId-' + part.id} value={model.id} hidden />
+									<Input id={'part-name-' + part.id} title="Name" bind:value={part.name} />
+									<Input
+										id={'part-displayName-' + part.id}
+										title="Display Name"
+										bind:value={part.displayName}
+									/>
+									<Input
+										id={'part-description-' + part.id}
+										title="Description"
+										bind:value={part.description}
+									/>
+									<Input
+										id={'part-materials-' + part.id}
+										title="Available Materials"
+										type="select-multiple"
+										data={materials}
+										bind:value={part.materials}
+									/>
+									<Input
+										id={'part-material-' + part.id}
+										title="Default Material"
+										type="select"
+										data={part.materials.map((material) => {
+											return materials.find((m) => m.id === material);
 										})}
-									bind:value={part.color}
-								/>
-								<div class="row">
-									<Input
-										id={'part-position-x-' + part.id}
-										title="Position X"
-										type="number"
-										step="0.01"
-										bind:value={part.position[0]}
+										bind:value={part.material}
 									/>
 									<Input
-										id={'part-position-y-' + part.id}
-										title="Position Y"
-										type="number"
-										step="0.01"
-										bind:value={part.position[1]}
+										id={'part-color-' + part.id}
+										title="Default Color"
+										type="select"
+										data={materials
+											?.find((m) => m.id === part.material)
+											?.colors?.map((color) => {
+												return colors?.find((c) => c.id === color);
+											})}
+										bind:value={part.color}
 									/>
-									<Input
-										id={'part-position-z-' + part.id}
-										title="Position Z"
-										type="number"
-										step="0.01"
-										bind:value={part.position[2]}
-									/>
-								</div>
-								<div class="row">
-									<Input
-										id={'part-target-x-' + part.id}
-										title="Target X"
-										type="number"
-										step="0.01"
-										bind:value={part.target[0]}
-									/>
-									<Input
-										id={'part-target-y-' + part.id}
-										title="Target Y"
-										type="number"
-										step="0.01"
-										bind:value={part.target[1]}
-									/>
-									<Input
-										id={'part-target-z-' + part.id}
-										title="Target Z"
-										type="number"
-										step="0.01"
-										bind:value={part.target[2]}
-									/>
+									<div class="row">
+										<Input
+											id={'part-position-x-' + part.id}
+											title="Position X"
+											type="number"
+											step="0.01"
+											bind:value={part.position[0]}
+										/>
+										<Input
+											id={'part-position-y-' + part.id}
+											title="Position Y"
+											type="number"
+											step="0.01"
+											bind:value={part.position[1]}
+										/>
+										<Input
+											id={'part-position-z-' + part.id}
+											title="Position Z"
+											type="number"
+											step="0.01"
+											bind:value={part.position[2]}
+										/>
+									</div>
+									<div class="row">
+										<Input
+											id={'part-target-x-' + part.id}
+											title="Target X"
+											type="number"
+											step="0.01"
+											bind:value={part.target[0]}
+										/>
+										<Input
+											id={'part-target-y-' + part.id}
+											title="Target Y"
+											type="number"
+											step="0.01"
+											bind:value={part.target[1]}
+										/>
+										<Input
+											id={'part-target-z-' + part.id}
+											title="Target Z"
+											type="number"
+											step="0.01"
+											bind:value={part.target[2]}
+										/>
+									</div>
+									<button
+										type="button"
+										onclick={() => {
+											config.setPosTargetFromCamera({ partName: part.name });
+										}}>SET FROM CAMERA</button
+									>
 								</div>
 							{/each}
 						{/if}
 					</div>
-				{/if}
+				</div>
 			{/each}
 			<button type="submit">Save Model settings</button>
 		</form>
 	{/if}
 
+	<p>UPLOAD MODEL</p>
+	<hr />
 	<form
 		action="?/addModel"
 		method="POST"
@@ -163,7 +191,9 @@
 
 			return async ({ update, result }) => {
 				await update();
-				models = result.data.models;
+				if (result.type === 'success') {
+					goto(result.data.path);
+				}
 			};
 		}}
 	>
@@ -258,5 +288,10 @@
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;
+		padding-bottom: 1rem;
+	}
+
+	.hidden {
+		display: none;
 	}
 </style>

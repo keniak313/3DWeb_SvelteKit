@@ -1,7 +1,13 @@
 <script lang="ts">
 	import favicon from '$lib/assets/favicon.svg';
+	import { createConfig } from '$lib/state/config.svelte.js';
+	import { setContext } from 'svelte';
 
-	let { children } = $props();
+	let { children, data } = $props();
+
+	const config = createConfig(data);
+
+	setContext('config', config);
 </script>
 
 <svelte:head>

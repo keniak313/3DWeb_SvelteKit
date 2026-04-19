@@ -4,17 +4,10 @@ import { eq } from 'drizzle-orm';
 
 export const load = async ({ locals, url }) => {
 	const urlItem = decodeConfig(url.searchParams.get('item'));
-	console.log(urlItem);
 	const modelsData = await locals.db.query.model.findMany();
 	const colors = await locals.db.query.color.findMany();
 	const textures = await locals.db.query.texture.findMany({});
 	const materialsData = await locals.db.query.material.findMany();
-
-	interface HydratedPart {
-		material: Material;
-		color: Color;
-		materials: Material[];
-	}
 
 	const materials = materialsData.map((mat) => {
 		mat.transparent = Boolean(mat.transparent);
@@ -25,30 +18,22 @@ export const load = async ({ locals, url }) => {
 		return mat;
 	});
 
-	const modelsHydrated = modelsData.map((item) => {
-		const parts = Object.values(item.parts);
-		parts.forEach((part) => {
-			part.visible = true;
-			part.material = materials.find((material) => material.id === part.material);
-			part.color = colors.find((color) => color.id === part.color);
-			part.materials = part.materials?.map((mat) => {
+	const models = modelsData.reduce((acc, item) => {
+		const { parts, ...rest } = item;
+		const newParts = {};
+		Object.values(parts).forEach((part) => {
+			const newPart = { ...part };
+			newParts[part.name] = newPart;
+			newPart.material = materials.find((material) => material.id === part.material);
+			newPart.color = colors.find((color) => color.id === part.color);
+			newPart.materials = part.materials?.map((mat) => {
 				return materials.find((material) => material.id === mat);
 			});
 		});
-		return { ...item, parts };
-	});
 
-	const models = {};
-
-	modelsHydrated.map((item) => {
-		const { parts, ...rest } = item;
-		const newParts = {};
-		parts.forEach((part) => {
-			newParts[part.name] = part;
-		});
-
-		models[item.name] = { ...rest, parts: newParts };
-	});
+		acc[item.name] = { ...rest, parts: newParts };
+		return acc;
+	}, {});
 
 	if (urlItem) {
 		urlItem.parts.forEach((part) => {
@@ -63,7 +48,7 @@ export const load = async ({ locals, url }) => {
 
 	const user = locals.user;
 
-	return { models, materials, colors, textures, user };
+	return { models, materials, colors, textures, user, modelsData };
 };
 
 export const actions = {

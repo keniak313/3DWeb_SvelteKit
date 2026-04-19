@@ -3,7 +3,9 @@
 	import Input from '../Input.svelte';
 	import { enhance } from '$app/forms';
 
-	let { materials = $bindable(), colors } = $props();
+	let { materials, colors } = $props();
+
+	const selectedMat = $state({ id: null });
 </script>
 
 <div>
@@ -20,54 +22,79 @@
 	>
 		<div class="materials">
 			{#each materials as material (material.id)}
-				<Input id="id" value={material.id} hidden style="display: none;" />
-				<Input id={'name-' + material.id} bind:value={material.name} />
-				<Input id={'displayName-' + material.id} bind:value={material.displayName} />
-				<Input id={'description-' + material.id} bind:value={material.description} />
-				<Input
-					id={'metalness-' + material.id}
-					step="0.01"
-					min="0"
-					max="1"
-					type="number"
-					bind:value={material.metalness}
-				/>
-				<Input
-					id={'roughness-' + material.id}
-					step="0.01"
-					min="0"
-					max="1"
-					type="number"
-					bind:value={material.roughness}
-				/>
-				<Input
-					id={'transparent-' + material.id}
-					type="checkbox"
-					bind:checked={material.transparent}
-				/>
-				<Input
-					id={'opacity-' + material.id}
-					type="number"
-					step="0.01"
-					min="0"
-					max="1"
-					bind:value={material.opacity}
-				/>
-				<Input
-					id={'color-' + material.id}
-					type="select"
-					data={material.colors.map((color) => {
-						return colors.find((c) => c.id === color);
-					})}
-					bind:value={material.color}
-				/>
-				<Input
-					id={'colors-' + material.id}
-					type="select-multiple"
-					data={colors}
-					bind:value={material.colors}
-					multiple
-				/>
+				<button
+					onclick={() => {
+						if (selectedMat.id === material.id) {
+							selectedMat.id = null;
+						} else {
+							selectedMat.id = material.id;
+						}
+					}}>{material.name}</button
+				>
+				<div class={'material' + (selectedMat.id === material.id ? '' : ' hidden')}>
+					<Input id="id" value={material.id} hidden style="display: none;" />
+					<Input id={'name-' + material.id} title="Name" bind:value={material.name} />
+					<Input
+						id={'displayName-' + material.id}
+						title="Display Name"
+						bind:value={material.displayName}
+					/>
+					<Input
+						id={'description-' + material.id}
+						title="Description"
+						bind:value={material.description}
+					/>
+					<Input
+						id={'metalness-' + material.id}
+						title="Metalness"
+						step="0.01"
+						min="0"
+						max="1"
+						type="number"
+						bind:value={material.metalness}
+					/>
+					<Input
+						id={'roughness-' + material.id}
+						title="Roughness"
+						step="0.01"
+						min="0"
+						max="1"
+						type="number"
+						bind:value={material.roughness}
+					/>
+					<Input
+						id={'transparent-' + material.id}
+						title="Transparent"
+						type="checkbox"
+						bind:checked={material.transparent}
+					/>
+					<Input
+						id={'opacity-' + material.id}
+						title="Opacity"
+						type="number"
+						step="0.01"
+						min="0"
+						max="1"
+						bind:value={material.opacity}
+					/>
+					<Input
+						id={'color-' + material.id}
+						title="Default Color"
+						type="select"
+						data={material.colors.map((color) => {
+							return colors.find((c) => c.id === color);
+						})}
+						bind:value={material.color}
+					/>
+					<Input
+						id={'colors-' + material.id}
+						title="Available Colors"
+						type="select-multiple"
+						data={colors}
+						bind:value={material.colors}
+						multiple
+					/>
+				</div>
 			{/each}
 		</div>
 		<button
@@ -94,8 +121,12 @@
 
 <style>
 	.materials {
-		display: grid;
-		grid-template-columns: repeat(9, 1fr);
+		display: flex;
+		flex-direction: column;
 		gap: 1rem;
+	}
+
+	.hidden {
+		display: none;
 	}
 </style>

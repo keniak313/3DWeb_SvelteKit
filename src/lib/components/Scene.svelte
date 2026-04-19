@@ -11,7 +11,8 @@
 		Suspense,
 		SoftShadows,
 		BakeShadows,
-		transitions
+		transitions,
+		type CameraControlsRef
 	} from '@threlte/extras';
 	import {
 		Color,
@@ -36,24 +37,19 @@
 	} from 'threlte-postprocessing/effects';
 	import { BlendFunction, SMAAPreset, ToneMappingMode, VignetteTechnique } from 'postprocessing';
 	import AssetPreloader, { getHDRI } from './AssetPreloader.svelte';
-	// import { models } from '../utilities/data.svelte';
 	import Model from './Model.svelte';
-	import { DEFAULT_VIEW, getSelected } from './Product.svelte';
 	import { scale } from '$lib/transitions';
+	import { getContext } from 'svelte';
 
-	let { controls = $bindable(), config, models, data } = $props();
+	const config = getContext('config');
 
-	// const loader = new HDRLoader().setPath('/HDRI/').setRequestHeader({});
-	// const promise = loader.loadAsync('monochrome_studio_02_2k.hdr').then((texture) => {
-	// 	texture.mapping = EquirectangularReflectionMapping;
-	// 	return texture;
-	// });
+	const models = $derived(config.modelsHydrated);
 
 	interactivity();
 	transitions();
 </script>
 
-<AssetPreloader {data} />
+<AssetPreloader />
 
 <EffectComposer multisampling={8}>
 	<!-- <DepthOfFieldEffect
@@ -63,14 +59,14 @@
 		focusRange={config.dof.focusRange}
 		resolutionScale={1}
 	/> -->
-	<BloomEffect
+	<!-- <BloomEffect
 		luminanceThreshold={config.bloom.luminanceThreshold}
 		luminanceSmoothing={config.bloom.luminanceSmoothing}
 		radius={config.bloom.radius}
 		intensity={config.bloom.intensity}
 		mipmapBlur={config.bloom.mipmapBlur}
 		resolutionScale={1}
-	/>
+	/> -->
 	<ToneMappingEffect mode={ToneMappingMode.ACES_FILMIC} />
 	<VignetteEffect offset={0.3} eskil={false} darkness={0.4} />
 </EffectComposer>
@@ -81,9 +77,9 @@
 
 <T.PerspectiveCamera makeDefault visible fov={35} near={0.01} far={20}>
 	<CameraControls
-		bind:ref={controls}
+		bind:ref={config.camControls.controls}
 		oncreate={(ref) => {
-			ref.setLookAt(...DEFAULT_VIEW.position, ...DEFAULT_VIEW.target, true);
+			ref.setLookAt(2.31, 1.43, 2.96, 0, 0.8, 0, true);
 		}}
 		maxPolarAngle={Math.PI / 2}
 		minPolarAngle={Math.PI / 5}
@@ -117,7 +113,7 @@
 	color="#ffffff"
 />
 {#each Object.values(models) as model (model.id)}
-	{#if getSelected()?.model.id === model.id}
+	{#if model.name === config.selectedAsset.model?.name}
 		<T.Group in={scale(0)}>
 			<Model {model} />
 		</T.Group>
