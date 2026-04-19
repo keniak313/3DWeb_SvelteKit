@@ -37,7 +37,9 @@
 	// ];
 
 	loadedAssets.models = Object.values(models).reduce((acc, model) => {
-		acc[model.name] = useGltf(model.url);
+		const time = new Date(model.updatedAt).getTime();
+		console.log(time);
+		acc[model.name] = useGltf(model.url + '?v=' + time);
 		return acc;
 	}, {});
 

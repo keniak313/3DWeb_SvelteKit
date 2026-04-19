@@ -57,7 +57,11 @@ export const model = sqliteTable('model', {
 	>(),
 	createdAt: text('created_at', { mode: 'text' })
 		.notNull()
+		.default(sql`CURRENT_TIMESTAMP`),
+	updatedAt: text('updated_at', { mode: 'text' })
+		.notNull()
 		.default(sql`CURRENT_TIMESTAMP`)
+		.$onUpdate(() => sql`CURRENT_TIMESTAMP`)
 });
 
 export const texture = sqliteTable('texture', {
