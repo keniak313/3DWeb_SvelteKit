@@ -8,7 +8,7 @@
 
 	let selected = $derived(config.selectedAsset);
 
-	const models = config.modelsHydrated;
+	const models = $derived(config.modelsHydrated);
 
 	let user = false;
 </script>
@@ -17,11 +17,16 @@
 	<div class="top">WORK IN PROGRESS</div>
 	<div class="left">
 		{#each Object.values(models) as model (model.id)}
+			{@const time = new Date(model.updatedAt).getTime()}
 			<button
 				class={selected?.model?.name === model.name && 'selected'}
 				onclick={() => config.setSelected({ modelName: model.name })}
 			>
-				<Image src={model.icon} alt={model.name} width={50} height={50} />
+				{#if model.icon}
+					<Image src={model.icon + '?v=' + time} alt={model.name} width={50} height={50} />
+				{:else}
+					<div style="width: 50px; height: 50px; background-color: magenta"></div>
+				{/if}
 				{model.displayName}
 			</button>
 		{/each}

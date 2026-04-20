@@ -2,6 +2,7 @@ import { goto } from '$app/navigation';
 import { page } from '$app/state';
 import { encodeConfig } from '$lib/utilities/helpers';
 import type { CameraControlsRef } from '@threlte/extras';
+import { untrack } from 'svelte';
 import { SvelteMap } from 'svelte/reactivity';
 
 const setUrl = (model) => {
@@ -40,7 +41,7 @@ export const createConfig = (initData) => {
 		partName: null
 	});
 
-	const models = $state(initData.models);
+	let models = $state(initData.models);
 	const colors = $state(initData.colors);
 	const materials = $state(initData.materials);
 	const textures = $state(initData.textures);
@@ -170,6 +171,10 @@ export const createConfig = (initData) => {
 		sceneConfig.camera.target = target;
 	}
 
+	function updateModels(newData) {
+		models = newData;
+	}
+
 	return {
 		get models() {
 			return models;
@@ -196,6 +201,7 @@ export const createConfig = (initData) => {
 		setPosTargetFromCamera,
 		clearPart,
 		setSceneConfig,
-		setAssetFromUrl
+		setAssetFromUrl,
+		updateModels
 	};
 };

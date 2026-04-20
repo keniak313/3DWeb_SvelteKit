@@ -233,15 +233,22 @@ export const actions = {
 				.where(eq(model.id, modelInfo.id));
 		} else {
 			await locals.db.insert(model).values({
+				id: modelInfo.id,
 				name: modelInfo.name,
 				displayName: modelInfo.displayName,
 				description: modelInfo.description,
 				url: url,
+				icon: null,
 				parts: modelInfo.parts
 			});
 		}
 
-		return { success: true, path: '/admin' };
+		// throw redirect(303, '/admin');
+		const models = await locals.db.query.model.findMany();
+		const modelurl = url;
+		const modelName = name;
+
+		return { success: true, models, modelurl, modelName };
 	},
 	addTexture: async ({ request, locals }) => {
 		const formData = await request.formData();
@@ -252,7 +259,7 @@ export const actions = {
 			const name = tx.name.split('.')[0];
 			const { url } = await put('textures/' + tx.name, tx, {
 				access: 'public',
-				token: env.BLOB_READ_WRITE_TOKEN,
+				token: BLOB_READ_WRITE_TOKEN,
 				allowOverwrite: true
 			});
 

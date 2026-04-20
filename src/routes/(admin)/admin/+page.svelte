@@ -57,7 +57,7 @@
 		gap: 0.2rem;
 	}
 	.forms {
-		width: 350px;
+		width: 400px;
 		height: 100vh;
 		top: 0;
 		right: 0;

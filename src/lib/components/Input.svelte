@@ -15,8 +15,8 @@
 	{title}
 	{#if type === 'select'}
 		<select name={id} {id} bind:value {...props}>
-			{#each data as item (item.id)}
-				<option value={item.id}>{item.name}</option>
+			{#each data as item (item?.id)}
+				<option value={item?.id}>{item?.name}</option>
 			{/each}
 		</select>
 	{:else if type === 'select-multiple'}

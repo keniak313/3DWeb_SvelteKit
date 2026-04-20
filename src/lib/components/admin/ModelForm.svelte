@@ -3,7 +3,7 @@
 	import { GLTFLoader } from 'three/examples/jsm/Addons.js';
 	import Input from '../Input.svelte';
 	import { nanoid } from '$lib/utilities/helpers';
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { getContext } from 'svelte';
 	import { Image } from '@unpic/svelte';
 
@@ -98,10 +98,13 @@
 			}}
 		>
 			{#each models as model (model.id)}
+				{@const time = new Date(model.updatedAt).getTime()}
 				<div class={selectedModel.id === model.id ? '' : 'hidden'}>
 					<div>
 						<p>ICON</p>
-						<Image src={model.icon} alt="" width="100" height="100" />
+						{#if model.icon}
+							<Image src={model.icon + '?v=' + time} alt="" width="100" height="100" />
+						{/if}
 						<button
 							type="button"
 							onclick={async () => {
@@ -262,7 +265,7 @@
 			return async ({ update, result }) => {
 				await update();
 				if (result.type === 'success') {
-					goto(result.data.path);
+					config.updateModels(result.data.models);
 				}
 			};
 		}}
@@ -289,9 +292,9 @@
 						name: part.name,
 						displayName: '',
 						description: '',
-						materials: [],
-						material: '',
-						color: '',
+						materials: ['0'],
+						material: '0',
+						color: '0',
 						position: [1, 1, 1],
 						target: [0, 1, 0]
 					};
@@ -315,9 +318,9 @@
 							name: part.name,
 							displayName: '',
 							description: '',
-							materials: [],
-							material: '',
-							color: '',
+							materials: ['0'],
+							material: '0',
+							color: '0',
 							position: [1, 1, 1],
 							target: [0, 1, 0]
 						};
