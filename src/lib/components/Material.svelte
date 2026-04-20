@@ -5,8 +5,15 @@
 	import { Color } from 'three';
 	import RimShader from './RimShader.svelte';
 	import { getLoadedAssets } from './AssetPreloader.svelte';
+	import { Spring } from 'svelte/motion';
 
-	let { material, modelName, setColor } = $props();
+	let { material, modelName, setColor, isHovered } = $props();
+
+	const emissiveIntensity = new Spring(0);
+
+	$effect(() => {
+		emissiveIntensity.set(isHovered ? 0.3 : 0);
+	});
 
 	let materialRef = $state();
 
@@ -53,6 +60,8 @@
 		transparent={material.transparent}
 		aoMap={$aoTexture}
 		color={newColor}
+		emissive="white"
+		emissiveIntensity={emissiveIntensity.current}
 		aoMapIntensity={1}
 		needsUpdate={true}
 		oncreate={(ref) => {

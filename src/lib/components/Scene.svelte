@@ -59,14 +59,14 @@
 		focusRange={config.dof.focusRange}
 		resolutionScale={1}
 	/> -->
-	<!-- <BloomEffect
-		luminanceThreshold={config.bloom.luminanceThreshold}
-		luminanceSmoothing={config.bloom.luminanceSmoothing}
-		radius={config.bloom.radius}
-		intensity={config.bloom.intensity}
-		mipmapBlur={config.bloom.mipmapBlur}
+	<BloomEffect
+		luminanceThreshold={config.sceneConfig.bloom.luminanceThreshold}
+		luminanceSmoothing={config.sceneConfig.bloom.luminanceSmoothing}
+		radius={config.sceneConfig.bloom.radius}
+		intensity={config.sceneConfig.bloom.intensity}
+		mipmapBlur={true}
 		resolutionScale={1}
-	/> -->
+	/>
 	<ToneMappingEffect mode={ToneMappingMode.ACES_FILMIC} />
 	<VignetteEffect offset={0.3} eskil={false} darkness={0.4} />
 </EffectComposer>
@@ -80,8 +80,8 @@
 		bind:ref={config.sceneConfig.controls}
 		oncreate={(ref) => {
 			ref.setLookAt(
-				...config.sceneConfig.defaultCameraPosition,
-				...config.sceneConfig.defaultCameraTarget,
+				...config.sceneConfig.camera.position,
+				...config.sceneConfig.camera.target,
 				true
 			);
 		}}

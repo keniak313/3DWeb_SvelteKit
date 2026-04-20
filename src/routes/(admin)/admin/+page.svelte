@@ -3,6 +3,7 @@
 	import ColorsForm from '$lib/components/admin/ColorsForm.svelte';
 	import MaterialsForm from '$lib/components/admin/MaterialsForm.svelte';
 	import ModelForm from '$lib/components/admin/ModelForm.svelte';
+	import SceneForm from '$lib/components/admin/SceneForm.svelte';
 	import TextureForm from '$lib/components/admin/TextureForm.svelte';
 	import Product from '$lib/components/Product.svelte';
 	import { getContext } from 'svelte';
@@ -16,6 +17,7 @@
 	<Product />
 	<div class="forms">
 		<div class="nav">
+			<button onclick={() => (selectedMenu = 'scene')}>Scene</button>
 			<button onclick={() => (selectedMenu = 'colors')}>Colors</button>
 			<button onclick={() => (selectedMenu = 'materials')}>Materials</button>
 			<button onclick={() => (selectedMenu = 'textures')}>Textures</button>
@@ -24,6 +26,9 @@
 				<button>WYLOGUJ</button>
 			</form>
 		</div>
+		{#if selectedMenu === 'scene'}
+			<SceneForm />
+		{/if}
 		{#if selectedMenu === 'colors'}
 			<ColorsForm colors={config.colors} />
 		{/if}

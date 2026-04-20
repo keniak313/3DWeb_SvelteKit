@@ -1,5 +1,5 @@
 import { eq, getTableColumns, inArray, sql } from 'drizzle-orm';
-import { color, material, model, session, texture } from '$lib/server/db/schema.js';
+import { color, config, material, model, session, texture } from '$lib/server/db/schema.js';
 import { error, redirect } from '@sveltejs/kit';
 import { put } from '@vercel/blob';
 import { BLOB_READ_WRITE_TOKEN } from '$env/static/private';
@@ -223,5 +223,36 @@ export const actions = {
 		const textures = await locals.db.query.texture.findMany({});
 
 		return { textures };
+	},
+	updateSceneConfig: async ({ request, locals }) => {
+		const formData = await request.formData();
+
+		const data = {
+			camera: {
+				position: [
+					Number(formData.get('pos-x')),
+					Number(formData.get('pos-y')),
+					Number(formData.get('pos-z'))
+				],
+				target: [
+					Number(formData.get('target-x')),
+					Number(formData.get('target-y')),
+					Number(formData.get('target-z'))
+				]
+			},
+			bloom: {
+				luminanceThreshold: Number(formData.get('bloom-threshold')),
+				luminanceSmoothing: Number(formData.get('bloom-smoothing')),
+				intensity: Number(formData.get('bloom-intensity')),
+				radius: Number(formData.get('bloom-radius'))
+			}
+		};
+
+		await locals.db.update(config).set({ settings: data.camera }).where(eq(config.name, 'camera'));
+		await locals.db.update(config).set({ settings: data.bloom }).where(eq(config.name, 'bloom'));
+
+		console.log(data);
+
+		return { success: true };
 	}
 };

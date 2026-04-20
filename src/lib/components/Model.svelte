@@ -5,6 +5,7 @@
 	import { Color } from 'three';
 	import { getContext } from 'svelte';
 	import { getLoadedAssets } from './AssetPreloader.svelte';
+	import { Spring } from 'svelte/motion';
 
 	let { model } = $props();
 
@@ -14,19 +15,7 @@
 
 	const { onPointerEnter, onPointerLeave } = useCursor('pointer');
 
-	const pointerEnter = (e) => {
-		e.stopPropagation();
-		onPointerEnter();
-
-		e.object.material.emissiveIntensity = 1;
-		e.object.material.emissive = new Color('white');
-	};
-	const pointerLeave = (e) => {
-		e.stopPropagation();
-		onPointerLeave();
-
-		e.object.material.emissiveIntensity = 0;
-	};
+	let hoveredPartName = $state();
 </script>
 
 {#if $gltf}
@@ -41,8 +30,19 @@
 				scale={[mesh.scale.x, mesh.scale.y, mesh.scale.z]}
 				castShadow={true}
 				receiveShadow={true}
-				onpointerenter={onPointerEnter}
-				onpointerleave={onPointerLeave}
+				onpointerenter={(e) => {
+					e.stopPropagation();
+					if (!mesh.name.includes('use')) return;
+					onPointerEnter();
+					if (config.selectedAsset.part?.name !== part.name) {
+						hoveredPartName = part.name;
+					}
+				}}
+				onpointerleave={(e) => {
+					e.stopPropagation();
+					onPointerLeave();
+					hoveredPartName = null;
+				}}
 				onclick={(e) => {
 					e.stopPropagation();
 					if (!mesh.name.includes('use')) return;
@@ -50,10 +50,16 @@
 						modelName: model.name,
 						partName: part.name
 					});
+					hoveredPartName = null;
 				}}
 			>
 				{#if part?.material}
-					<Material material={part.material} modelName={model.name} setColor={part.color} />
+					<Material
+						material={part.material}
+						modelName={model.name}
+						setColor={part.color}
+						isHovered={hoveredPartName === part.name}
+					/>
 				{:else}
 					<T.MeshBasicMaterial color="magenta" />
 				{/if}
