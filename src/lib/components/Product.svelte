@@ -147,18 +147,20 @@
 	import ProductUI from './ProductUI.svelte';
 	import { page } from '$app/state';
 	import { WebGLRenderer } from 'three';
+	import { getContext, onMount } from 'svelte';
+	import { decodeConfig } from '$lib/utilities/helpers';
 
 	let isStudio = $state(false);
 
+	const config = getContext('config');
+
 	const urlItem = $derived(page.url.searchParams.get('item'));
-	// onMount(() => {
-	// 	if (urlItem) {
-	// 		const decoded = decodeConfig(urlItem);
-	// 		setSelected({
-	// 			model: models[decoded.model]
-	// 		});
-	// 	}
-	// });
+	onMount(() => {
+		if (urlItem) {
+			const decoded = decodeConfig(urlItem);
+			config.setAssetFromUrl({ modelName: decoded.modelName, parts: decoded.parts });
+		}
+	});
 </script>
 
 <!-- <TweakPane {controls} {postProcessConfig} /> -->

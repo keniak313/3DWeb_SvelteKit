@@ -7,7 +7,7 @@
 	import { getLoadedAssets } from './AssetPreloader.svelte';
 	import { Spring } from 'svelte/motion';
 
-	let { model } = $props();
+	let { model, isDragging } = $props();
 
 	const config = getContext('config');
 
@@ -31,6 +31,10 @@
 				castShadow={true}
 				receiveShadow={true}
 				onpointerenter={(e) => {
+					if (isDragging) {
+						hoveredPartName = null;
+						return;
+					}
 					e.stopPropagation();
 					if (!mesh.name.includes('use')) return;
 					onPointerEnter();

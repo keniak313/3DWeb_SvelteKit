@@ -56,6 +56,8 @@
 
 	scene.background = new Color('white');
 
+	let isDragging = $state(false);
+
 	interactivity();
 	transitions();
 </script>
@@ -102,6 +104,12 @@
 		azimuthAngle={Math.PI / 5}
 		dollySpeed={isAdmin ? 1 : 0}
 		truckSpeed={isAdmin ? 1 : 0}
+		oncontrolstart={() => {
+			isDragging = true;
+		}}
+		oncontrolend={() => {
+			isDragging = false;
+		}}
 	/>
 </T.PerspectiveCamera>
 
@@ -130,7 +138,7 @@
 {#each Object.values(models) as model (model.id)}
 	{#if model.name === config.selectedAsset.model?.name}
 		<T.Group in={scale(0)}>
-			<Model {model} />
+			<Model {model} {isDragging} />
 		</T.Group>
 	{/if}
 {/each}

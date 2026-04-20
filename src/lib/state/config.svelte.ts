@@ -1,5 +1,30 @@
+import { goto } from '$app/navigation';
+import { page } from '$app/state';
+import { encodeConfig } from '$lib/utilities/helpers';
 import type { CameraControlsRef } from '@threlte/extras';
 import { SvelteMap } from 'svelte/reactivity';
+
+const setUrl = (model) => {
+	const curUrl = !page.route.id.includes('(admin)');
+	if (!curUrl) return;
+
+	const parts = [];
+	Object.values(model.parts).forEach((part) => {
+		if (part.name.includes('use')) {
+			parts.push({
+				name: part.name,
+				color: part.color,
+				material: part.material
+			});
+		}
+	});
+	const url = encodeConfig({
+		modelName: model.name,
+		parts: parts
+	});
+
+	goto(`/?item=${url}`);
+};
 
 export const createConfig = (initData) => {
 	const configData = initData.config;
@@ -71,6 +96,7 @@ export const createConfig = (initData) => {
 
 			sceneConfig.controls?.setLookAt(...part.position, ...part.target, true);
 		} else {
+			setUrl(models.find((m) => m.name === selected.modelName));
 			sceneConfig.controls?.setLookAt(
 				...sceneConfig.camera.position,
 				...sceneConfig.camera.target,
@@ -86,6 +112,8 @@ export const createConfig = (initData) => {
 
 		part.material = materialId;
 		part.color = material.color;
+
+		setUrl(model);
 	}
 
 	function setAssetColor({ colorId }) {
@@ -93,6 +121,16 @@ export const createConfig = (initData) => {
 		const part = model.parts[selected.partName];
 
 		part.color = colorId;
+		setUrl(model);
+	}
+
+	function setAssetFromUrl({ modelName, parts }) {
+		const model = models.find((m) => m.name === modelName);
+		parts.forEach((part) => {
+			model.parts[part.name].material = part.material;
+			model.parts[part.name].color = part.color;
+		});
+		selected.modelName = modelName;
 	}
 
 	function clearPart() {
@@ -157,6 +195,7 @@ export const createConfig = (initData) => {
 		setAssetColor,
 		setPosTargetFromCamera,
 		clearPart,
-		setSceneConfig
+		setSceneConfig,
+		setAssetFromUrl
 	};
 };

@@ -17,7 +17,10 @@
 	<div class="top">WORK IN PROGRESS</div>
 	<div class="left">
 		{#each Object.values(models) as model (model.id)}
-			<button onclick={() => config.setSelected({ modelName: model.name })}>
+			<button
+				class={selected?.model?.name === model.name && 'selected'}
+				onclick={() => config.setSelected({ modelName: model.name })}
+			>
 				<Image src={model.icon} alt={model.name} width={50} height={50} />
 				{model.name}
 			</button>
@@ -148,6 +151,7 @@
 
 		button {
 			pointer-events: all;
+			cursor: pointer;
 		}
 	}
 
