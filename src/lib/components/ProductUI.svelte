@@ -22,7 +22,7 @@
 				onclick={() => config.setSelected({ modelName: model.name })}
 			>
 				<Image src={model.icon} alt={model.name} width={50} height={50} />
-				{model.name}
+				{model.displayName}
 			</button>
 		{/each}
 	</div>
@@ -152,6 +152,9 @@
 		button {
 			pointer-events: all;
 			cursor: pointer;
+			display: flex;
+			flex-direction: column;
+			padding: 0.2rem;
 		}
 	}
 
