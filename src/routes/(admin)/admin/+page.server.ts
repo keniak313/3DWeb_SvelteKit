@@ -123,26 +123,67 @@ export const actions = {
 			};
 		});
 
-		const newModels = ids.map((id) => {
-			return {
-				id: id,
-				name: formdata.get(`name-${id}`),
-				displayName: formdata.get(`displayName-${id}`),
-				description: formdata.get(`description-${id}`),
-				url: formdata.get(`url-${id}`),
-				parts: newParts[id]
-			};
-		});
+		const newModels = [];
+
+		for await (const modelId of ids) {
+			const icon = formdata.get(`icon-${modelId}`);
+			let uploadedIcon = null;
+			if (icon instanceof File) {
+				const { url } = await put('icons/' + icon.name, icon, {
+					access: 'public',
+					token: BLOB_READ_WRITE_TOKEN,
+					allowOverwrite: true
+				});
+				uploadedIcon = url;
+			}
+			newModels.push({
+				id: modelId,
+				name: formdata.get(`name-${modelId}`),
+				displayName: formdata.get(`displayName-${modelId}`),
+				description: formdata.get(`description-${modelId}`),
+				url: formdata.get(`url-${modelId}`),
+				icon: uploadedIcon ? uploadedIcon : formdata.get(`icon-${modelId}`),
+				parts: newParts[modelId]
+			});
+		}
+
+		console.log(newModels);
+
+		// const newIcons = [];
+
+		// const newModels = ids.map((id) => {
+		// 	if (formdata.get(`icon-${id}`) instanceof File) {
+		// 		newIcons.push({
+		// 			id: id,
+		// 			icon: formdata.get(`icon-${id}`)
+		// 		});
+		// 	}
+		// 	return {
+		// 		id: id,
+		// 		name: formdata.get(`name-${id}`),
+		// 		displayName: formdata.get(`displayName-${id}`),
+		// 		description: formdata.get(`description-${id}`),
+		// 		url: formdata.get(`url-${id}`),
+		// 		icon: formdata.get(`icon-${id}`),
+		// 		parts: newParts[id]
+		// 	};
+		// });
+
+		// for await (const icon of newIcons) {
+		// 	const { url } = await put('models/' + icon.icon.name, icon.icon, {
+		// 		access: 'public',
+		// 		token: BLOB_READ_WRITE_TOKEN,
+		// 		allowOverwrite: true
+		// 	});
+		// }
+
+		// console.log(newIcons);
 
 		const columns = getTableColumns(model);
 		const updateFields = Object.fromEntries(
 			Object.entries(columns)
 				.filter(([key]) => key !== 'id')
-				.map(([key, column]) => [
-					key,
-					// Używamy column.name, aby dostać czysty string nazwy kolumny w SQL
-					sql.raw(`excluded.${column.name}`)
-				])
+				.map(([key, column]) => [key, sql.raw(`excluded.${column.name}`)])
 		);
 
 		if (newModels.length > 0) {
@@ -154,7 +195,7 @@ export const actions = {
 			console.log(newModels);
 		}
 
-		return { success: true };
+		return { success: true, models: newModels };
 	},
 	addModel: async ({ request, locals }) => {
 		const form = await request.formData();
@@ -186,6 +227,7 @@ export const actions = {
 					displayName: modelInfo.displayName,
 					description: modelInfo.description,
 					url: modelInfo.url,
+					icon: modelInfo.icon,
 					parts: modelInfo.parts
 				})
 				.where(eq(model.id, modelInfo.id));

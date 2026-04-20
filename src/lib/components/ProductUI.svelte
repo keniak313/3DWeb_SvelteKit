@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { getContext } from 'svelte';
 	import Input from './Input.svelte';
+	import { Image } from '@unpic/svelte';
 
 	const config = getContext('config');
 
@@ -16,7 +17,10 @@
 	<div class="top">WORK IN PROGRESS</div>
 	<div class="left">
 		{#each Object.values(models) as model (model.id)}
-			<button onclick={() => config.setSelected({ modelName: model.name })}>{model.name}</button>
+			<button onclick={() => config.setSelected({ modelName: model.name })}>
+				<Image src={model.icon} alt={model.name} width={50} height={50} />
+				{model.name}
+			</button>
 		{/each}
 	</div>
 	{#if selected?.part}
@@ -139,8 +143,12 @@
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;
-		pointer-events: all;
+		pointer-events: none;
 		padding: 2rem;
+
+		button {
+			pointer-events: all;
+		}
 	}
 
 	.bot {

@@ -43,6 +43,7 @@ export const model = sqliteTable('model', {
 	displayName: text('display_name'),
 	description: text('description'),
 	url: text('url'),
+	icon: text('icon'),
 	parts: text('parts', { mode: 'json' }).$type<
 		{
 			name: string;

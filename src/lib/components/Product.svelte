@@ -146,6 +146,7 @@
 	import Loader from './Loader.svelte';
 	import ProductUI from './ProductUI.svelte';
 	import { page } from '$app/state';
+	import { WebGLRenderer } from 'three';
 
 	let isStudio = $state(false);
 
@@ -167,7 +168,14 @@
 	<div class="canvas-wrapper" in:fade>
 		<ProductUI />
 
-		<Canvas>
+		<Canvas
+			createRenderer={(canvas) => {
+				return new WebGLRenderer({
+					canvas,
+					preserveDrawingBuffer: true
+				});
+			}}
+		>
 			<!-- <Renderer config={postProcessConfig} /> -->
 			<Suspense>
 				{#if isStudio}

@@ -12,7 +12,9 @@
 		SoftShadows,
 		BakeShadows,
 		transitions,
-		type CameraControlsRef
+		type CameraControlsRef,
+		HTML,
+		ShadowMaterial
 	} from '@threlte/extras';
 	import {
 		Color,
@@ -39,11 +41,20 @@
 	import AssetPreloader, { getHDRI } from './AssetPreloader.svelte';
 	import Model from './Model.svelte';
 	import { scale } from '$lib/transitions';
-	import { getContext } from 'svelte';
+	import { getContext, setContext } from 'svelte';
+	import { page } from '$app/state';
+
+	let isAdmin = $derived(page.route.id?.includes('(admin)'));
+
+	const { renderer, scene, camera } = useThrelte();
+
+	let composer = $state<EffectComposer | null>(null);
 
 	const config = getContext('config');
 
 	const models = $derived(config.modelsHydrated);
+
+	scene.background = new Color('white');
 
 	interactivity();
 	transitions();
@@ -51,7 +62,7 @@
 
 <AssetPreloader />
 
-<EffectComposer multisampling={8}>
+<EffectComposer multisampling={8} bind:ref={composer}>
 	<!-- <DepthOfFieldEffect
 		focusDistance={config.dof.focusDistance}
 		focalLength={config.dof.focalLength}
@@ -68,7 +79,7 @@
 		resolutionScale={1}
 	/>
 	<ToneMappingEffect mode={ToneMappingMode.ACES_FILMIC} />
-	<VignetteEffect offset={0.3} eskil={false} darkness={0.4} />
+	<VignetteEffect offset={0.3} eskil={false} darkness={0.2} />
 </EffectComposer>
 
 <Environment texture={getHDRI()} isBackground={false} />
@@ -89,8 +100,8 @@
 		minPolarAngle={Math.PI / 5}
 		polarAngle={Math.PI / 2.4}
 		azimuthAngle={Math.PI / 5}
-		dollySpeed={1}
-		truckSpeed={1}
+		dollySpeed={isAdmin ? 1 : 0}
+		truckSpeed={isAdmin ? 1 : 0}
 	/>
 </T.PerspectiveCamera>
 
@@ -124,6 +135,11 @@
 	{/if}
 {/each}
 
+<!-- <T.Mesh position={[0, 0, 0]} scale={2} rotation.x={-1 * 0.5 * Math.PI}>
+	<T.PlaneGeometry />
+	<ShadowMaterial color="black" />
+</T.Mesh> -->
+
 <!-- <BakeShadows /> -->
 
 <GLTF
@@ -131,5 +147,10 @@
 	oncreate={(ref) => {
 		ref.children[0].castShadow = false;
 		ref.children[0].receiveShadow = true;
+		ref.children[0].material = new MeshStandardMaterial({
+			color: 'white',
+			roughness: 1,
+			metalness: 0
+		});
 	}}
 />

@@ -4,20 +4,56 @@
 	import Input from '../Input.svelte';
 	import { nanoid } from '$lib/utilities/helpers';
 	import { goto } from '$app/navigation';
-	import { useThrelte } from '@threlte/core';
 	import { getContext } from 'svelte';
+	import { Image } from '@unpic/svelte';
 
 	let { models, materials, colors } = $props();
 
 	let modelExists = $state(false);
 
 	let newModel = $state();
-	let modelAction = $derived(modelExists ? '?/updateModel' : '?/addModel');
 
 	let selectedModel = $state({ id: null });
 	let selecedPart = $state({ id: null });
 
 	const config = getContext('config');
+
+	const generateIcon = async (model) => {
+		const targetSize = 512;
+		// 1. Spróbuj znaleźć canvas (dodaj klasę lub id do <Canvas> dla pewności)
+		const sourceCanvas = document.querySelector('canvas');
+
+		if (!sourceCanvas) {
+			console.error('Nie znaleziono elementu canvas!');
+			return null;
+		}
+
+		// 2. Sprawdź czy wymiary źródła są poprawne (nie są 0)
+		if (sourceCanvas.width === 0 || sourceCanvas.height === 0) {
+			console.error('Canvas ma zerowe wymiary!');
+			return null;
+		}
+
+		const tempCanvas = document.createElement('canvas');
+		tempCanvas.width = targetSize;
+		tempCanvas.height = targetSize;
+		const ctx = tempCanvas.getContext('2d');
+
+		if (!ctx) return null;
+
+		const sw = sourceCanvas.width;
+		const sh = sourceCanvas.height;
+		const size = Math.min(sw, sh);
+		const sx = (sw - size) / 2;
+		const sy = (sh - size) / 2;
+
+		// Przechwycenie obrazu
+		ctx.drawImage(sourceCanvas, sx, sy, size, size, 0, 0, targetSize, targetSize);
+
+		model.newIcon = true;
+
+		return tempCanvas.toDataURL('image/webp');
+	};
 </script>
 
 <div>
@@ -40,14 +76,41 @@
 			method="POST"
 			action="?/updateModels"
 			enctype="multipart/form-data"
-			use:enhance={() => {
-				return async ({ update }) => {
+			use:enhance={async ({ formData }) => {
+				for await (const model of Object.values(models)) {
+					if (model.newIcon) {
+						const base64 = model.icon;
+
+						const res = await fetch(base64);
+						const blob = await res.blob();
+						formData.append(`icon-${model.id}`, blob, `${model.name}.webp`);
+					} else {
+						formData.append(`icon-${model.id}`, model.icon);
+					}
+				}
+				return async ({ update, result }) => {
 					await update({ reset: false });
+					Object.values(models).forEach((model) => {
+						model.newIcon = false;
+						model.icon = result.data.models.find((m) => m.id === model.id).icon;
+					});
 				};
 			}}
 		>
 			{#each models as model (model.id)}
 				<div class={selectedModel.id === model.id ? '' : 'hidden'}>
+					<div>
+						<p>ICON</p>
+						<Image src={model.icon} alt="" width="100" height="100" />
+						<button
+							type="button"
+							onclick={async () => {
+								model.icon = await generateIcon(model);
+								console.log(model);
+							}}
+							>GENERATE ICON
+						</button>
+					</div>
 					<Input id="id" value={model.id} hidden />
 					<Input id={'name-' + model.id} title="Name" bind:value={model.name} />
 					<Input id={'url-' + model.id} title="URL" bind:value={model.url} />
@@ -239,6 +302,7 @@
 					name: file.name.split('.')[0],
 					displayName: '',
 					description: '',
+					icon: '',
 					parts: parts
 				};
 
@@ -278,6 +342,7 @@
 					newModel.displayName = existingModel.displayName;
 					newModel.description = existingModel.description;
 					newModel.url = existingModel.url;
+					newModel.icon = existingModel.icon;
 					newModel.parts = newParts;
 				}
 
