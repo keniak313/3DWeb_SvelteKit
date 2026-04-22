@@ -23,7 +23,11 @@
 				onclick={() => config.setSelected({ modelName: model.name })}
 			>
 				{#if model.icon}
-					<Image src={model.icon + '?v=' + time} alt={model.name} width={50} height={50} />
+					{#if !model.newIcon}
+						<Image src={model.icon + '?v=' + time} alt={model.name} width={50} height={50} />
+					{:else}
+						<Image src={model.icon} alt={model.name} width={50} height={50} />
+					{/if}
 				{:else}
 					<div style="width: 50px; height: 50px; background-color: magenta"></div>
 				{/if}
@@ -33,60 +37,6 @@
 	</div>
 	{#if selected?.part}
 		<div class="bot">
-			{#if user}
-				<form
-					class="material-editor"
-					method="POST"
-					use:enhance={() => {
-						return async ({ update }) => {
-							await update({ reset: false });
-						};
-					}}
-				>
-					<div style="display: none !important">
-						<Input id="colorId" value={selected.part.color.id} hidden />
-						<Input id="materialId" value={selected.part.material.id} hidden />
-					</div>
-					<Input title="Color" id="color" type="color" bind:value={selected.part.color.color} />
-					<Input
-						id="roughness"
-						style="width: 50px"
-						title="Roughness"
-						type="range"
-						min="0"
-						max="1"
-						step="0.01"
-						bind:value={selected.part.material.roughness}
-					/>
-					<Input
-						id="metalness"
-						style="width: 50px"
-						title="Metalness"
-						type="range"
-						min="0"
-						max="1"
-						step="0.01"
-						bind:value={selected.part.material.metalness}
-					/>
-					<Input
-						id="opacity"
-						style="width: 50px"
-						title="Opacity"
-						type="range"
-						min="0"
-						max="1"
-						step="0.01"
-						bind:value={selected.part.material.opacity}
-					/>
-					<Input
-						id="transparent"
-						title="Transparent"
-						type="checkbox"
-						bind:checked={selected.part.material.transparent}
-					/>
-					<button type="submit">SAVE</button>
-				</form>
-			{/if}
 			<div class="title">
 				<p>{selected?.model.displayName} - {selected?.part.displayName}</p>
 				<p>{selected?.part.description}</p>
@@ -95,22 +45,22 @@
 				{#each selected.part.materials as material (material.id)}
 					<div>
 						<button
-							class={selected.part.material.id === material.id && 'selected'}
+							class={selected?.part?.material?.id === material.id && 'selected'}
 							onclick={(e) => {
 								// setProductMaterial({ part: selected.part, material });
-								config.setAssetMaterial({ materialId: material.id });
+								config.setAssetMaterial({ materialId: material?.id });
 							}}
 							>{material.name}
 						</button>
 					</div>
 					{#if selected.part.material.id === material.id}
-						{#each selected.part.material.colors as color (color.id)}
+						{#each selected?.part?.material?.colors as color (color.id)}
 							<button
-								class={'color ' + (selected.part.color.id === color.id && 'selected')}
+								class={'color ' + (selected?.part?.color?.id === color.id && 'selected')}
 								style="background-color: {color.color}"
 								onclick={() => {
 									// setProductMaterialColor(color);
-									config.setAssetColor({ colorId: color.id });
+									config.setAssetColor({ colorId: color?.id });
 								}}>X</button
 							>
 						{/each}

@@ -26,6 +26,16 @@
 	const models = $derived(config.modelsHydrated);
 	const textures = $derived(config.textures);
 
+	const loadModels = () => {
+		loadedAssets.models = Object.values(models).reduce((acc, model) => {
+			const time = new Date(model.updatedAt).getTime();
+			acc[model.name] = useGltf(model.url + '?v=' + time);
+			return acc;
+		}, {});
+
+		loadedAssets.models['BG01'] = useGltf(asset('/3D/BG01.glb'));
+	};
+
 	loadedAssets.textures = textures.reduce((acc, texture) => {
 		acc[texture.name] = useTexture(texture.url, {
 			transform: (tx) => {
@@ -66,13 +76,9 @@
 		const currentModels = models;
 
 		untrack(() => {
-			loadedAssets.models = Object.values(models).reduce((acc, model) => {
-				const time = new Date(model.updatedAt).getTime();
-				acc[model.name] = useGltf(model.url + '?v=' + time);
-				return acc;
-			}, {});
-
-			loadedAssets.models['BG01'] = useGltf(asset('/3D/BG01.glb'));
+			loadModels();
 		});
 	});
+
+	loadModels();
 </script>

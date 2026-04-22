@@ -54,8 +54,8 @@ export const createConfig = (initData) => {
 				const hydratedMat = {
 					...mat,
 					transparent: Boolean(mat.transparent),
-					color: colorsMap.get(mat.color),
-					colors: mat.colors?.map((id) => colorsMap.get(id))
+					color: colorsMap.get(mat.color) || colorsMap.get('0'),
+					colors: mat.colors?.map((color) => colorsMap.get(color.id) || colorsMap.get('0'))
 				};
 				return [mat.id, hydratedMat];
 			})
@@ -73,7 +73,7 @@ export const createConfig = (initData) => {
 								...part,
 								material: materialsMap.get(part.material),
 								color: colorsMap.get(part.color),
-								materials: part.materials?.map((id) => materialsMap.get(id))
+								materials: part.materials?.map((mat) => materialsMap.get(mat.id))
 							}
 						])
 					)
@@ -144,6 +144,17 @@ export const createConfig = (initData) => {
 		);
 	}
 
+	function clearSelection() {
+		selected.modelName = null;
+		selected.partName = null;
+
+		sceneConfig.controls?.setLookAt(
+			...sceneConfig.camera.position,
+			...sceneConfig.camera.target,
+			true
+		);
+	}
+
 	function setPosTargetFromCamera({ partName }) {
 		const position = sceneConfig.controls?.getPosition();
 		const target = sceneConfig.controls?.getTarget();
@@ -200,6 +211,7 @@ export const createConfig = (initData) => {
 		setAssetColor,
 		setPosTargetFromCamera,
 		clearPart,
+		clearSelection,
 		setSceneConfig,
 		setAssetFromUrl,
 		updateModels

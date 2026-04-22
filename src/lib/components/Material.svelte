@@ -43,7 +43,7 @@
 		if (setColor) {
 			return setColor.color;
 		}
-		return color.color;
+		return color?.color;
 	});
 
 	let timeUniform = { value: 0 };

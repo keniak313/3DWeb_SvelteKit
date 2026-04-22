@@ -14,7 +14,8 @@ export const color = sqliteTable('color', {
 	color: text('color').notNull(),
 	createdAt: text('created_at', { mode: 'text' })
 		.notNull()
-		.default(sql`CURRENT_TIMESTAMP`)
+		.default(sql`CURRENT_TIMESTAMP`),
+	deletedAt: text('deleted_at')
 });
 
 export const material = sqliteTable('material', {
@@ -32,7 +33,8 @@ export const material = sqliteTable('material', {
 	colors: text('colors', { mode: 'json' }).$type<string[]>(),
 	createdAt: text('created_at', { mode: 'text' })
 		.notNull()
-		.default(sql`CURRENT_TIMESTAMP`)
+		.default(sql`CURRENT_TIMESTAMP`),
+	deletedAt: text('deleted_at')
 });
 
 export const model = sqliteTable('model', {
@@ -62,7 +64,8 @@ export const model = sqliteTable('model', {
 	updatedAt: text('updated_at', { mode: 'text' })
 		.notNull()
 		.default(sql`CURRENT_TIMESTAMP`)
-		.$onUpdate(() => sql`CURRENT_TIMESTAMP`)
+		.$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+	deletedAt: text('deleted_at')
 });
 
 export const texture = sqliteTable('texture', {

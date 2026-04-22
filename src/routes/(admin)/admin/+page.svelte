@@ -3,8 +3,10 @@
 	import ColorsForm from '$lib/components/admin/ColorsForm.svelte';
 	import MaterialsForm from '$lib/components/admin/MaterialsForm.svelte';
 	import ModelForm from '$lib/components/admin/ModelForm.svelte';
+	import NewModelForm from '$lib/components/admin/NewModelForm.svelte';
 	import SceneForm from '$lib/components/admin/SceneForm.svelte';
 	import TextureForm from '$lib/components/admin/TextureForm.svelte';
+	import InputSelect from '$lib/components/InputSelect.svelte';
 	import Product from '$lib/components/Product.svelte';
 	import { getContext } from 'svelte';
 
@@ -26,20 +28,57 @@
 				<button>WYLOGUJ</button>
 			</form>
 		</div>
-		{#if selectedMenu === 'scene'}
-			<SceneForm />
+		<form
+			method="POST"
+			action="?/saveSettings"
+			enctype="multipart/form-data"
+			use:enhance={async ({ formData }) => {
+				for await (const model of Object.values(config.models)) {
+					if (model.newIcon) {
+						console.log('NEW ICON FOUND', model.icon);
+						const base64 = model.icon;
+
+						const res = await fetch(base64);
+						const blob = await res.blob();
+						formData.append(`model-icon-${model.id}`, blob, `${model.name}.webp`);
+					} else {
+						formData.append(`model-icon-${model.id}`, model.icon);
+					}
+				}
+
+				return async ({ update, result }) => {
+					await update({ reset: false });
+					Object.values(config.models).forEach((model) => {
+						if (model.newIcon) {
+							model.newIcon = false;
+							model.icon = result.data.updatedIcons.find((m) => m.id === model.id).icon;
+						}
+					});
+				};
+			}}
+		>
+			<button type="submit">Save Settings</button>
+			<div class={selectedMenu === 'scene' ? '' : 'hidden'}>
+				<SceneForm />
+			</div>
+			<div class={selectedMenu === 'colors' ? '' : 'hidden'}>
+				<ColorsForm />
+			</div>
+			<div class={selectedMenu === 'materials' ? '' : 'hidden'}>
+				<MaterialsForm />
+			</div>
+
+			<div class={selectedMenu === 'models' ? '' : 'hidden'}>
+				<ModelForm />
+			</div>
+		</form>
+
+		{#if selectedMenu === 'models'}
+			<NewModelForm models={config.models} />
 		{/if}
-		{#if selectedMenu === 'colors'}
-			<ColorsForm colors={config.colors} />
-		{/if}
-		{#if selectedMenu === 'materials'}
-			<MaterialsForm materials={config.materials} colors={config.colors} />
-		{/if}
+
 		{#if selectedMenu === 'textures'}
 			<TextureForm textures={config.textures} />
-		{/if}
-		{#if selectedMenu === 'models'}
-			<ModelForm models={config.models} materials={config.materials} colors={config.colors} />
 		{/if}
 	</div>
 </div>
@@ -67,5 +106,9 @@
 		overflow-y: auto;
 		padding: 0.5rem;
 		background-color: white;
+	}
+
+	.hidden {
+		display: none;
 	}
 </style>
