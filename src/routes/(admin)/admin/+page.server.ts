@@ -3,6 +3,11 @@ import { color, config, material, model, session, texture } from '$lib/server/db
 import { error, redirect } from '@sveltejs/kit';
 import { put } from '@vercel/blob';
 import { BLOB_READ_WRITE_TOKEN } from '$env/static/private';
+import { updateConfig } from '$lib/server/services/configService.js';
+import { updateColors } from '$lib/server/services/colorService.js';
+import { updateMaterials } from '$lib/server/services/materialService.js';
+import { updateModels } from '$lib/server/services/modelService.js';
+import { updateTextures } from '$lib/server/services/textureService.js';
 
 export const actions = {
 	logout: async ({ locals, cookies }) => {
@@ -196,7 +201,8 @@ export const actions = {
 					description: modelInfo.description,
 					url: modelInfo.url,
 					icon: modelInfo.icon,
-					parts: modelInfo.parts
+					parts: modelInfo.parts,
+					updatedAt: new Date().toISOString()
 				})
 				.where(eq(model.id, modelInfo.id));
 		} else {
@@ -207,7 +213,9 @@ export const actions = {
 				description: modelInfo.description,
 				url: url,
 				icon: null,
-				parts: modelInfo.parts
+				parts: modelInfo.parts,
+				createdAt: new Date().toISOString(),
+				updatedAt: new Date().toISOString()
 			});
 		}
 
@@ -272,196 +280,36 @@ export const actions = {
 
 		return { success: true };
 	},
+	uploadModel: async ({ request, locals }) => {
+		const formData = await request.formData();
+
+		const file = formData.get('file') as File;
+		console.log(file);
+
+		const { url } = await put('models/' + file.name, file, {
+			access: 'public',
+			token: BLOB_READ_WRITE_TOKEN,
+			allowOverwrite: true
+		});
+
+		return { url };
+	},
 	saveSettings: async ({ request, locals }) => {
 		const formData = await request.formData();
 
-		//Scene Config
+		// await updateConfig({ formData, locals });
+		// await updateColors({ formData, locals });
+		// await updateMaterials({ formData, locals });
+		await updateModels({ formData, locals });
+		await updateTextures({ formData, locals });
 
-		const sceneConfig = {
-			camera: {
-				position: [
-					Number(formData.get('config-pos-x')),
-					Number(formData.get('config-pos-y')),
-					Number(formData.get('config-pos-z'))
-				],
-				target: [
-					Number(formData.get('config-target-x')),
-					Number(formData.get('config-target-y')),
-					Number(formData.get('config-target-z'))
-				]
-			},
-			bloom: {
-				luminanceThreshold: Number(formData.get('config-bloom-threshold')),
-				luminanceSmoothing: Number(formData.get('config-bloom-smoothing')),
-				intensity: Number(formData.get('config-bloom-intensity')),
-				radius: Number(formData.get('config-bloom-radius'))
-			}
-		};
+		// const models = await locals.db.query.model.findMany();
+		// const textures = await locals.db.query.texture.findMany();
+		// const colors = await locals.db.query.color.findMany();
+		// const materials = await locals.db.query.material.findMany();
+		// const configData = await locals.db.query.config.findMany();
+		// const config = Object.fromEntries(configData.map((c) => [c.name, c.settings]));
 
-		await locals.db
-			.update(config)
-			.set({ settings: sceneConfig.camera })
-			.where(eq(config.name, 'camera'));
-		await locals.db
-			.update(config)
-			.set({ settings: sceneConfig.bloom })
-			.where(eq(config.name, 'bloom'));
-
-		//Colors
-
-		const colorsIds = formData.getAll('color-id');
-
-		const newColors = colorsIds.map((id) => {
-			return {
-				id: id,
-				color: formData.get(`color-color-${id}`),
-				displayName: formData.get(`color-displayName-${id}`),
-				name: formData.get(`color-name-${id}`),
-				deletedAt: formData.get(`color-deletedAt-${id}`)
-					? formData.get(`color-deletedAt-${id}`)
-					: null
-			};
-		});
-
-		const colorColumns = getTableColumns(color);
-		const colorUpdateFields = Object.fromEntries(
-			Object.entries(colorColumns)
-				.filter(([key]) => key !== 'id')
-				.map(([key, column]) => [
-					key,
-					// Używamy column.name, aby dostać czysty string nazwy kolumny w SQL
-					sql.raw(`excluded.${column.name}`)
-				])
-		);
-
-		if (newColors.length > 0) {
-			await locals.db
-				.insert(color)
-				.values(newColors)
-				.onConflictDoUpdate({ target: color.id, set: colorUpdateFields });
-			// console.log(newColors);
-		}
-
-		//Materials
-
-		const materialsIds = formData.getAll('material-id');
-
-		const newMaterials = materialsIds.map((id) => {
-			return {
-				id: id,
-				name: formData.get(`material-name-${id}`),
-				displayName: formData.get(`material-displayName-${id}`),
-				description: formData.get(`material-description-${id}`),
-				metalness: Number(formData.get(`material-metalness-${id}`)),
-				roughness: Number(formData.get(`material-roughness-${id}`)),
-				transparent: formData.get(`material-transparent-${id}`) === 'on' ? 1 : 0,
-				opacity: Number(formData.get(`material-opacity-${id}`)),
-				color: formData.get(`material-color-${id}`) || null,
-				colors: JSON.parse(formData.get(`material-colors-${id}`))
-			};
-		});
-
-		const materialColumns = getTableColumns(material);
-		const materialUpdateFields = Object.fromEntries(
-			Object.entries(materialColumns)
-				.filter(([key]) => key !== 'id')
-				.map(([key, column]) => [
-					key,
-					// Używamy column.name, aby dostać czysty string nazwy kolumny w SQL
-					sql.raw(`excluded.${column.name}`)
-				])
-		);
-
-		if (newMaterials.length > 0) {
-			await locals.db
-				.insert(material)
-				.values(newMaterials)
-				.onConflictDoUpdate({ target: material.id, set: materialUpdateFields });
-
-			// console.log(newMaterials);
-		}
-
-		//Models
-
-		const modelIds = formData.getAll('model-id');
-		const partsIds = formData.getAll('part-id');
-
-		const newParts = {};
-
-		modelIds.forEach((id) => {
-			newParts[id] = {};
-		});
-
-		partsIds.forEach((id) => {
-			newParts[formData.get(`part-model-id-${id}`)] = {
-				...newParts[formData.get(`part-model-id-${id}`)],
-				[formData.get(`part-name-${id}`)]: {
-					id: id,
-					name: formData.get(`part-name-${id}`),
-					displayName: formData.get(`part-displayName-${id}`),
-					description: formData.get(`part-description-${id}`),
-					materials: JSON.parse(formData.getAll(`part-materials-${id}`)),
-					material: formData.get(`part-material-${id}`),
-					color: formData.get(`part-color-${id}`),
-					position: [
-						Number(formData.get(`part-position-x-${id}`)),
-						Number(formData.get(`part-position-y-${id}`)),
-						Number(formData.get(`part-position-z-${id}`))
-					],
-					target: [
-						Number(formData.get(`part-target-x-${id}`)),
-						Number(formData.get(`part-target-y-${id}`)),
-						Number(formData.get(`part-target-z-${id}`))
-					]
-				}
-			};
-		});
-
-		const newModels = [];
-		const updatedIcons = [];
-
-		for await (const modelId of modelIds) {
-			const icon = formData.get(`model-icon-${modelId}`);
-			let uploadedIcon = null;
-			if (icon instanceof File) {
-				console.log('NEW FILE ICON FOUND', icon);
-				const { url } = await put('icons/' + icon.name, icon, {
-					access: 'public',
-					token: BLOB_READ_WRITE_TOKEN,
-					allowOverwrite: true
-				});
-				uploadedIcon = url;
-				updatedIcons.push({
-					id: modelId,
-					icon: url
-				});
-			}
-			newModels.push({
-				id: modelId,
-				name: formData.get(`model-name-${modelId}`),
-				displayName: formData.get(`model-displayName-${modelId}`),
-				description: formData.get(`model-description-${modelId}`),
-				url: formData.get(`model-url-${modelId}`),
-				icon: uploadedIcon ? uploadedIcon : formData.get(`model-icon-${modelId}`),
-				parts: newParts[modelId],
-				updatedAt: new Date().toISOString()
-			});
-		}
-
-		const modelsColumns = getTableColumns(model);
-		const modelsUpdateFields = Object.fromEntries(
-			Object.entries(modelsColumns)
-				.filter(([key]) => key !== 'id')
-				.map(([key, column]) => [key, sql.raw(`excluded.${column.name}`)])
-		);
-
-		if (newModels.length > 0) {
-			await locals.db
-				.insert(model)
-				.values(newModels)
-				.onConflictDoUpdate({ target: model.id, set: modelsUpdateFields });
-		}
-
-		return { success: true, updatedIcons };
+		return { success: true };
 	}
 };

@@ -23,43 +23,8 @@
 
 	const config = getContext('config');
 
-	const models = $derived(config.modelsHydrated);
-	const textures = $derived(config.textures);
-
-	const loadModels = () => {
-		loadedAssets.models = Object.values(models).reduce((acc, model) => {
-			const time = new Date(model.updatedAt).getTime();
-			acc[model.name] = useGltf(model.url + '?v=' + time);
-			return acc;
-		}, {});
-
-		loadedAssets.models['BG01'] = useGltf(asset('/3D/BG01.glb'));
-	};
-
-	loadedAssets.textures = textures.reduce((acc, texture) => {
-		acc[texture.name] = useTexture(texture.url, {
-			transform: (tx) => {
-				tx.name = texture.name;
-				tx.image.crossOrigin = 'anonymous';
-				tx.flipY = false;
-				tx.wrapS = tx.wrapT = RepeatWrapping;
-				if (texture.name.includes('ORM') || texture.name.includes('AO')) {
-					tx.colorSpace = LinearSRGBColorSpace;
-				}
-				return tx;
-			}
-		});
-		return acc;
-	}, {});
-
-	loadedAssets.textures['default'] = useTexture(asset('/Textures/default.webp'), {
-		transform: (tx) => {
-			tx.name = 'default';
-			tx.flipY = false;
-			tx.wrapS = tx.wrapT = RepeatWrapping;
-			return tx;
-		}
-	});
+	const models = $derived(config.data.models);
+	const textures = $derived(config.data.textures);
 
 	const loadHDR = async () => {
 		const url = '/HDRI/monochrome_studio_02_2k.hdr';
@@ -70,15 +35,88 @@
 		hdri = texture;
 	};
 
+	const loadModels = (models) => {
+		if (!loadedAssets.models) loadedAssets.models = {};
+		// loadedAssets.models = Object.values(models).reduce((acc, model) => {
+		// 	const time = new Date(model?.updatedAt).getTime();
+		// 	const url = model.url.startsWith('blob:') ? model.url : model.url + '?v=' + time;
+		// 	acc[model.name] = useGltf(url);
+		// 	return acc;
+		// }, {});
+		Object.values(models).forEach((model) => {
+			if (!loadedAssets.models[model.name]) {
+				const time = model.updatedAt ? new Date(model.updatedAt).getTime() : Date.now();
+				const url = model.url.startsWith('blob:') ? model.url : model.url + '?v=' + time;
+
+				console.log('Rejestruję nowy model:', model.name, url);
+
+				// Rejestrujemy loader
+				loadedAssets.models[model.name] = useGltf(url);
+			}
+		});
+
+		if (!loadedAssets.models['BG01']) {
+			loadedAssets.models['BG01'] = useGltf(asset('/3D/BG01.glb'));
+		}
+	};
+
+	const loadTextures = (textures) => {
+		if (!loadedAssets.textures) loadedAssets.textures = {};
+		Object.values(textures).forEach((texture) => {
+			loadedAssets.textures[texture.name] = useTexture(texture.url, {
+				transform: (tx) => {
+					tx.name = texture.name;
+					tx.image.crossOrigin = 'anonymous';
+					tx.flipY = false;
+					tx.wrapS = tx.wrapT = RepeatWrapping;
+					if (texture.name.includes('ORM') || texture.name.includes('AO')) {
+						tx.colorSpace = LinearSRGBColorSpace;
+					}
+					return tx;
+				}
+			});
+		});
+		// loadedAssets.textures = Object.fromEntries(
+		// 	textures.map((t) => [
+		// 		t.name,
+		// 		useTexture(t.url, {
+		// 			transform: (tx) => {
+		// 				tx.name = t.name;
+		// 				tx.image.crossOrigin = 'anonymous';
+		// 				tx.flipY = false;
+		// 				tx.wrapS = tx.wrapT = RepeatWrapping;
+		// 				if (t.name.includes('ORM') || t.name.includes('AO')) {
+		// 					tx.colorSpace = LinearSRGBColorSpace;
+		// 				}
+		// 				return tx;
+		// 			}
+		// 		})
+		// 	])
+		// );
+
+		loadedAssets.textures['default'] = useTexture(asset('/Textures/default.webp'), {
+			transform: (tx) => {
+				tx.name = 'default';
+				tx.flipY = false;
+				tx.wrapS = tx.wrapT = RepeatWrapping;
+				return tx;
+			}
+		});
+	};
+
 	loadHDR();
+	loadModels(models);
+	loadTextures(textures);
 
 	$effect(() => {
-		const currentModels = models;
+		loadModels(models);
+		loadTextures(textures);
+		// const currentModels = models;
+		// const currentTextures = textures;
 
-		untrack(() => {
-			loadModels();
-		});
+		// untrack(() => {
+		// 	loadModels(currentModels);
+		// 	loadTextures(currentTextures);
+		// });
 	});
-
-	loadModels();
 </script>

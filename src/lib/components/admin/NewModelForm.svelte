@@ -12,6 +12,33 @@
 	let modelExists = $state(false);
 
 	let newModel = $state();
+
+	let uploadProgress = $state(0);
+
+	let isUploading = $state(false);
+
+	function handleUpload(formData) {
+		return new Promise((resolve, reject) => {
+			const xhr = new XMLHttpRequest();
+
+			// Monitorowanie postępu
+			xhr.upload.onprogress = (event) => {
+				if (event.lengthComputable) {
+					uploadProgress = Math.round((event.loaded / event.total) * 100);
+				}
+			};
+
+			xhr.onload = () => {
+				if (xhr.status >= 200 && xhr.status < 300) resolve(JSON.parse(xhr.response));
+				else reject();
+			};
+
+			// Wysyłamy do tej samej akcji, którą masz w <form action="?/saveSettings">
+			xhr.open('POST', '?/addModel');
+			// Ważne: przy XMLHttpRequest + FormData NIE ustawiamy ręcznie Content-Type
+			xhr.send(formData);
+		});
+	}
 </script>
 
 <p>UPLOAD MODEL</p>
@@ -20,17 +47,23 @@
 	action="?/addModel"
 	method="POST"
 	enctype="multipart/form-data"
-	use:enhance={({ formData }) => {
-		formData.append('modelInfo', JSON.stringify(newModel));
-
-		return async ({ update, result }) => {
-			await update();
-			if (result.type === 'success') {
-				config.updateModels(result.data.models);
-			}
-		};
+	use:enhance={async ({ formData, cancel }) => {
+		cancel();
+		isUploading = true;
+		uploadProgress = 0;
+		try {
+			formData.append('modelInfo', JSON.stringify(newModel));
+			await handleUpload(formData);
+			window.location.reload();
+		} catch (err) {
+			console.log(err);
+		}
 	}}
 >
+	{#if isUploading}
+		<progress value={uploadProgress} max="100"></progress>
+		<p>{uploadProgress}%</p>
+	{/if}
 	{#if modelExists}
 		<p>Model already exists. Uploading will result in updating exisiting model.</p>
 	{/if}
@@ -48,6 +81,7 @@
 			console.log('Existing:', $state.snapshot(checkExisting));
 
 			const parts = gltf.children.reduce((acc, part) => {
+				if (!part.name.includes('use')) return acc;
 				acc[part.name] = {
 					id: nanoid(5),
 					name: part.name,
@@ -56,8 +90,8 @@
 					materials: [],
 					material: null,
 					color: null,
-					position: [1, 1, 1],
-					target: [0, 1, 0]
+					position: [3, 2, 3],
+					target: [0, 0.8, 0]
 				};
 				return acc;
 			}, {});
@@ -74,6 +108,7 @@
 				const existingModel = checkExisting;
 
 				const newParts = gltf.children.reduce((acc, part) => {
+					if (!part.name.includes('use')) return acc;
 					acc[part.name] = {
 						id: nanoid(5),
 						name: part.name,
@@ -82,8 +117,8 @@
 						materials: [],
 						material: null,
 						color: null,
-						position: [1, 1, 1],
-						target: [0, 1, 0]
+						position: [3, 2, 3],
+						target: [0, 0.8, 0]
 					};
 					return acc;
 				}, {});

@@ -140,7 +140,7 @@
 	import Scene from '../components/Scene.svelte';
 	import { Studio } from '@threlte/studio';
 
-	import { Suspense } from '@threlte/extras';
+	import { Suspense, useProgress } from '@threlte/extras';
 
 	import { fade } from 'svelte/transition';
 	import Loader from './Loader.svelte';
@@ -151,6 +151,8 @@
 	import { decodeConfig } from '$lib/utilities/helpers';
 
 	let isStudio = $state(false);
+
+	const { progress } = useProgress();
 
 	const config = getContext('config');
 
@@ -166,7 +168,7 @@
 <!-- <TweakPane {controls} {postProcessConfig} /> -->
 
 <section>
-	<Loader />
+	<Loader progress={$progress} />
 	<div class="canvas-wrapper" in:fade>
 		<ProductUI />
 

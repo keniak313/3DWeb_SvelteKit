@@ -162,3 +162,10 @@
 		});
 	}}
 />
+
+<!-- <GLTF
+	url="/3D/Watch01_Test.glb"
+	oncreate={(ref) => {
+		console.log(ref);
+	}}
+/> -->

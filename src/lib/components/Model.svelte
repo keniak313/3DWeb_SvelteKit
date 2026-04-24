@@ -2,8 +2,8 @@
 	import { T } from '@threlte/core';
 	import { useCursor } from '@threlte/extras';
 	import Material from './Material.svelte';
-	import { Color } from 'three';
-	import { getContext } from 'svelte';
+	import { Color, MeshStandardMaterial } from 'three';
+	import { getContext, onMount } from 'svelte';
 	import { getLoadedAssets } from './AssetPreloader.svelte';
 	import { Spring } from 'svelte/motion';
 
@@ -19,55 +19,63 @@
 </script>
 
 {#if $gltf}
-	<T.Group>
-		{#each $gltf.nodes[model.name].children as mesh, index (mesh.uuid)}
-			{@const part = model.parts[mesh.name]}
-			<T.Mesh
-				name={mesh.name}
-				geometry={mesh.geometry}
-				position={[mesh.position.x, mesh.position.y, mesh.position.z]}
-				rotation={[mesh.rotation.x, mesh.rotation.y, mesh.rotation.z]}
-				scale={[mesh.scale.x, mesh.scale.y, mesh.scale.z]}
-				castShadow={true}
-				receiveShadow={true}
-				onpointerenter={(e) => {
-					if (isDragging) {
-						hoveredPartName = null;
-						return;
-					}
-					e.stopPropagation();
-					if (!mesh.name.includes('use')) return;
-					onPointerEnter();
-					if (config.selectedAsset.part?.name !== part.name) {
-						hoveredPartName = part.name;
-					}
-				}}
-				onpointerleave={(e) => {
-					e.stopPropagation();
-					onPointerLeave();
+	{#each $gltf.scene.children as mesh, index (mesh.uuid)}
+		{@const part = model.parts[mesh.name]}
+		<T.Mesh
+			name={mesh.name}
+			geometry={mesh.geometry}
+			position={[mesh.position.x, mesh.position.y, mesh.position.z]}
+			rotation={[mesh.rotation.x, mesh.rotation.y, mesh.rotation.z]}
+			scale={[mesh.scale.x, mesh.scale.y, mesh.scale.z]}
+			castShadow={true}
+			receiveShadow={true}
+			onpointerenter={(e) => {
+				if (isDragging) {
 					hoveredPartName = null;
-				}}
-				onclick={(e) => {
-					e.stopPropagation();
-					if (!mesh.name.includes('use')) return;
-					config.setSelected({
-						modelName: model.name,
-						partName: part.name
-					});
-					hoveredPartName = null;
-				}}
-			>
-				{#if part?.material}
-					<Material
-						material={part.material}
-						modelName={model.name}
-						setColor={part.color}
-						isHovered={hoveredPartName === part.name}
-					/>
-				{:else}
-					<T.MeshBasicMaterial color="magenta" />
-				{/if}
-				<!-- {#each mesh.children as child (child.uuid)}
+					return;
+				}
+				e.stopPropagation();
+				if (!mesh.name.includes('use')) return;
+				onPointerEnter();
+				if (config.selectedAsset.part?.name !== part.name) {
+					hoveredPartName = part.name;
+				}
+			}}
+			onpointerleave={(e) => {
+				e.stopPropagation();
+				onPointerLeave();
+				hoveredPartName = null;
+			}}
+			onclick={(e) => {
+				e.stopPropagation();
+				if (!mesh.name.includes('use')) return;
+				config.setSelected({
+					modelName: model.name,
+					partName: part.name
+				});
+				hoveredPartName = null;
+			}}
+			material={new MeshStandardMaterial({
+				color: 'magenta'
+			})}
+		>
+			{#if mesh.name.includes('use')}
+				<Material
+					material={part.material}
+					modelName={model.name}
+					setColor={part.color}
+					aoMap={mesh.material.aoMap}
+					isHovered={hoveredPartName === part.name}
+				/>
+			{:else}
+				{@const mat = mesh.material}
+				<T.MeshStandardMaterial aoMap={mat.aoMap} aoMapIntensity={2} color={mat.color} />
+			{/if}
+		</T.Mesh>
+	{/each}
+{/if}
+
+<!-- {#each mesh.children as child (child.uuid)}
 					<HTML
 						position={[child.position.x, child.position.y, child.position.z]}
 						occlude
@@ -97,10 +105,6 @@
 						{/if}
 					</HTML>
 				{/each} -->
-			</T.Mesh>
-		{/each}
-	</T.Group>
-{/if}
 
 <style>
 	.info {

@@ -41,16 +41,18 @@ export const createConfig = (initData) => {
 		partName: null
 	});
 
-	let models = $state(initData.models);
-	const colors = $state(initData.colors);
-	const materials = $state(initData.materials);
-	const textures = $state(initData.textures);
+	const data = $state({
+		models: initData.models,
+		colors: initData.colors,
+		materials: initData.materials,
+		textures: initData.textures
+	});
 
 	const modelsHydrated = $derived.by(() => {
-		const colorsMap = new SvelteMap(colors.map((c) => [c.id, c]));
+		const colorsMap = new SvelteMap(data.colors.map((c) => [c.id, c]));
 
 		const materialsMap = new SvelteMap(
-			materials.map((mat) => {
+			data.materials.map((mat) => {
 				const hydratedMat = {
 					...mat,
 					transparent: Boolean(mat.transparent),
@@ -62,7 +64,7 @@ export const createConfig = (initData) => {
 		);
 
 		return Object.fromEntries(
-			models.map((model) => [
+			data.models.map((model) => [
 				model.name,
 				{
 					...model,
@@ -92,12 +94,12 @@ export const createConfig = (initData) => {
 		selected.partName = partName;
 
 		if (partName) {
-			const model = models.find((m) => m.name === selected.modelName);
+			const model = data.models.find((m) => m.name === selected.modelName);
 			const part = model.parts[selected.partName];
 
 			sceneConfig.controls?.setLookAt(...part.position, ...part.target, true);
 		} else {
-			setUrl(models.find((m) => m.name === selected.modelName));
+			setUrl(data.models.find((m) => m.name === selected.modelName));
 			sceneConfig.controls?.setLookAt(
 				...sceneConfig.camera.position,
 				...sceneConfig.camera.target,
@@ -107,18 +109,20 @@ export const createConfig = (initData) => {
 	}
 
 	function setAssetMaterial({ materialId }) {
-		const model = models.find((m) => m.name === selected.modelName);
+		const model = data.models.find((m) => m.name === selected.modelName);
 		const part = model.parts[selected.partName];
-		const material = materials.find((m) => m.id === materialId);
+		const material = data.materials.find((m) => m.id === materialId);
 
 		part.material = materialId;
 		part.color = material.color;
+
+		// data.models = [...data.models];
 
 		setUrl(model);
 	}
 
 	function setAssetColor({ colorId }) {
-		const model = models.find((m) => m.name === selected.modelName);
+		const model = data.models.find((m) => m.name === selected.modelName);
 		const part = model.parts[selected.partName];
 
 		part.color = colorId;
@@ -126,7 +130,7 @@ export const createConfig = (initData) => {
 	}
 
 	function setAssetFromUrl({ modelName, parts }) {
-		const model = models.find((m) => m.name === modelName);
+		const model = data.models.find((m) => m.name === modelName);
 		parts.forEach((part) => {
 			model.parts[part.name].material = part.material;
 			model.parts[part.name].color = part.color;
@@ -162,7 +166,7 @@ export const createConfig = (initData) => {
 		console.log(target);
 
 		if (partName) {
-			const model = models.find((m) => m.name === selected.modelName);
+			const model = data.models.find((m) => m.name === selected.modelName);
 			const part = model.parts[partName];
 			part.position = [
 				Number(position.x.toFixed(2)),
@@ -182,25 +186,21 @@ export const createConfig = (initData) => {
 		sceneConfig.camera.target = target;
 	}
 
-	function updateModels(newData) {
-		models = newData;
+	function updateData(newData) {
+		data.models = newData.models;
+		data.colors = newData.colors;
+		data.materials = newData.materials;
+		data.textures = newData.textures;
+		sceneConfig.camera = newData.config.camera;
+		sceneConfig.bloom = newData.config.bloom;
 	}
 
 	return {
-		get models() {
-			return models;
+		get data() {
+			return data;
 		},
 		get modelsHydrated() {
 			return modelsHydrated;
-		},
-		get colors() {
-			return colors;
-		},
-		get materials() {
-			return materials;
-		},
-		get textures() {
-			return textures;
 		},
 		get selectedAsset() {
 			return selectedAsset;
@@ -214,6 +214,6 @@ export const createConfig = (initData) => {
 		clearSelection,
 		setSceneConfig,
 		setAssetFromUrl,
-		updateModels
+		updateData
 	};
 };

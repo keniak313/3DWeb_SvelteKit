@@ -4,12 +4,14 @@
 	import { enhance } from '$app/forms';
 	import { getContext } from 'svelte';
 	import InputSelect from '../InputSelect.svelte';
+	import { Image } from '@unpic/svelte';
 
 	const config = getContext('config');
 
-	const materials = $derived(config.materials);
+	const materials = $derived(config.data.materials);
+	const textures = $derived(config.data.textures);
 	const colors = $derived.by(() => {
-		return config.colors.filter((c) => c.id !== '0');
+		return config.data.colors.filter((c) => c.id !== '0');
 	});
 
 	const selectedMat = $state({ id: null });
@@ -124,8 +126,57 @@
 					})}
 					bind:value={material.color}
 				/>
+				<div class="textures">
+					{#if textures.length > 0}
+						{#each textures as texture (texture.id)}
+							{#if texture?.name.includes(material.name)}
+								<div class="texture">
+									<Image src={texture.url} alt={texture.name} width={100} height={100} />
+									<p>{texture.name}</p>
+								</div>
+							{/if}
+						{/each}
+					{/if}
+				</div>
 			</div>
 		{/each}
+		{#each textures as texture (texture.id)}
+			{#if texture?.isNew}
+				<div class="texture">
+					<Image src={texture.url} alt={texture.name} width={50} height={50} />
+					<p>{texture.name}</p>
+				</div>
+			{/if}
+		{/each}
+		<Input
+			id="texture"
+			title="ADD TEXTURES"
+			type="file"
+			multiple
+			accept="image/webp"
+			onchange={(e) => {
+				console.log(e.target.files);
+				for (const file of e.target.files) {
+					const existing = textures.find((t) => t.name === file.name.split('.')[0]);
+					console.log(existing);
+					if (existing) {
+						existing.file = file;
+						existing.url = URL.createObjectURL(file);
+						existing.isNew = true;
+					} else {
+						textures.push({
+							id: nanoid(5),
+							name: file.name.split('.')[0],
+							file: file,
+							url: URL.createObjectURL(file),
+							isNew: true
+						});
+					}
+				}
+				e.target.value = '';
+				console.log(textures);
+			}}
+		/>
 	</div>
 	<button
 		type="button"

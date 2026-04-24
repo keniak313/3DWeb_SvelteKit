@@ -13,9 +13,13 @@
 
 	const config = getContext('config');
 
-	const models = config.models;
-	const materials = config.materials;
-	const colors = config.colors;
+	let models = $derived(config.data.models);
+	const materials = $derived(config.data.materials);
+	const colors = $derived(config.data.colors);
+
+	let modelExists = $state(false);
+
+	let newModel = $state();
 
 	const generateIcon = async (model) => {
 		const targetSize = 512;
@@ -120,8 +124,8 @@
 					</button>
 				</div>
 				<Input id="model-id" value={model.id} hidden />
-				<Input id={'model-name-' + model.id} title="Name" bind:value={model.name} />
-				<Input id={'model-url-' + model.id} title="URL" bind:value={model.url} />
+				<Input id={'model-name-' + model.id} title="Name" bind:value={model.name} readonly />
+				<Input id={'model-url-' + model.id} title="URL" bind:value={model.url} readonly />
 				<Input
 					id={'model-displayName-' + model.id}
 					title="Display Name"
@@ -148,10 +152,10 @@
 					{/each}
 					{#if model.parts}
 						{#each Object.values(model.parts) as part (part.id)}
-							<div class={selecedPart.id === part.id ? '' : 'hidden'}>
+							<div class={config.selectedAsset?.part?.id === part.id ? '' : 'hidden'}>
 								<Input id="part-id" value={part.id} hidden />
 								<Input id={'part-model-id-' + part.id} value={model.id} hidden />
-								<Input id={'part-name-' + part.id} title="Name" bind:value={part.name} />
+								<Input id={'part-name-' + part.id} title="Name" bind:value={part.name} readonly />
 								<Input
 									id={'part-displayName-' + part.id}
 									title="Display Name"
@@ -293,6 +297,100 @@
 		<!-- <button type="submit">Save Model settings</button>
 		</form> -->
 	{/if}
+
+	<Input
+		type="file"
+		id="file"
+		accept=".glb,.gltf"
+		onchange={async (e) => {
+			const file = e.target.files[0];
+			const url = URL.createObjectURL(file);
+			const loader = new GLTFLoader();
+
+			const gltf = (await loader.loadAsync(url)).scene;
+			const checkExisting = models.find((model) => model.name === file.name.split('.')[0]);
+			console.log('Existing:', $state.snapshot(checkExisting));
+
+			const parts = gltf.children.reduce((acc, part) => {
+				if (!part.name.includes('use')) return acc;
+				acc[part.name] = {
+					id: nanoid(5),
+					name: part.name,
+					displayName: '',
+					description: '',
+					materials: [],
+					material: null,
+					color: null,
+					position: [3, 2, 3],
+					target: [0, 0.8, 0]
+				};
+				return acc;
+			}, {});
+			newModel = {
+				id: nanoid(5),
+				name: file.name.split('.')[0],
+				displayName: '',
+				description: '',
+				url: url,
+				icon: null,
+				parts: parts,
+				file: file
+			};
+
+			if (checkExisting) {
+				const existingModel = checkExisting;
+
+				const newParts = gltf.children.reduce((acc, part) => {
+					if (!part.name.includes('use')) return acc;
+					acc[part.name] = {
+						id: nanoid(5),
+						name: part.name,
+						displayName: '',
+						description: '',
+						materials: [],
+						material: null,
+						color: null,
+						position: [3, 2, 3],
+						target: [0, 0.8, 0]
+					};
+					return acc;
+				}, {});
+
+				console.log('EXISTING PARTS', Object.values($state.snapshot(existingModel.parts)));
+				console.log('NEW PARTS', Object.values(newParts));
+
+				Object.values(newParts).forEach((part) => {
+					const existingPart = existingModel.parts[part.name];
+					if (existingPart) {
+						newParts[part.name] = $state.snapshot(existingPart);
+					}
+				});
+
+				console.log('UPDATED PARTS', newParts);
+
+				modelExists = true;
+				newModel.id = existingModel.id;
+				newModel.name = existingModel.name;
+				newModel.displayName = existingModel.displayName;
+				newModel.description = existingModel.description;
+				newModel.url = existingModel.url;
+				newModel.icon = existingModel.icon;
+				newModel.parts = newParts;
+				newModel.file = file;
+			}
+
+			if (!modelExists) {
+				models.push(newModel);
+				// models = [...models, newModel];
+			}
+
+			console.log('FILE??', file);
+			console.log('GLB', gltf);
+			console.log('NEW MODEL', $state.snapshot(newModel));
+			console.log(models);
+			e.target.value = '';
+		}}
+	/>
 </div>
 
 <style>

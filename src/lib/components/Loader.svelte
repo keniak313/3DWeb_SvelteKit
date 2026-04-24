@@ -1,33 +1,35 @@
 <script lang="ts">
-	import { useProgress } from '@threlte/extras';
 	import { Tween } from 'svelte/motion';
-	import { fromStore } from 'svelte/store';
 	import { fade } from 'svelte/transition';
 
-	const { progress, finishedOnce } = useProgress();
-	const p = fromStore(progress);
+	let { progress, isShown = null, isServer = false } = $props();
 
-	const tweenedProgress = Tween.of(() => $progress, {
-		duration: 150
+	const tweenedProgress = Tween.of(() => progress, {
+		duration: 200
 	});
 
 	const progressWidth = $derived(100 * tweenedProgress.current);
-	const progressLessThanOne = $derived(tweenedProgress.current < 1);
 
-	const showLoader = $derived(!$finishedOnce || tweenedProgress.current < 1);
+	const showLoader = $derived.by(() => {
+		if (isServer) {
+			return isShown;
+		} else {
+			return tweenedProgress.current < 1;
+		}
+	});
 </script>
 
-<!-- {#if $progress < 1}
-		<div class="loader" transition:fade>Ładowanie: {Math.round($progress * 100)}%</div>
-	{/if} -->
-
-{#if showLoader && progressLessThanOne}<div
-		transition:fade={{
-			duration: 200
-		}}
-		class="loader-wrapper"
-	>
-		<p class="loading">Loading</p>
+{#if showLoader}
+	<div class="loader-wrapper" transition:fade>
+		{#if isServer}
+			{#if progress < 0.95}
+				<p>Saving...</p>
+			{:else}
+				<p>Processing files on server (please wait)...</p>
+			{/if}
+		{:else}
+			<p class="loading">Loading...</p>
+		{/if}
 		<div class="bar-wrapper">
 			<div class="bar" style="width: {progressWidth}%"></div>
 		</div>
@@ -35,19 +37,6 @@
 {/if}
 
 <style>
-	.loader {
-		position: absolute;
-		top: 0;
-		left: 0;
-		display: flex;
-		width: 100%;
-		height: 100%;
-		align-items: center;
-		justify-content: center;
-		background-color: white;
-		z-index: 1000;
-	}
-
 	.loader-wrapper {
 		position: absolute;
 		width: 100%;

@@ -4,10 +4,10 @@
 	import { materials } from '../utilities/data.svelte';
 	import { Color } from 'three';
 	import RimShader from './RimShader.svelte';
-	import { getLoadedAssets } from './AssetPreloader.svelte';
+	import { getHDRI, getLoadedAssets } from './AssetPreloader.svelte';
 	import { Spring } from 'svelte/motion';
 
-	let { material, modelName, setColor, isHovered } = $props();
+	let { aoMap = null, material, modelName, setColor, isHovered } = $props();
 
 	const emissiveIntensity = new Spring(0);
 
@@ -17,33 +17,22 @@
 
 	let materialRef = $state();
 
-	const aoTexture = $derived(
-		getLoadedAssets().textures[`${modelName}_AO`] || getLoadedAssets().textures[`default`]
-	);
+	const aoTexture = $derived(getLoadedAssets().textures[`default`]);
 
 	const ormTexture = $derived(
-		getLoadedAssets().textures[`${material.name}_ORM`] || getLoadedAssets().textures[`default`]
+		getLoadedAssets().textures[`${material?.name}_ORM`] || getLoadedAssets().textures[`default`]
 	);
 
-	const dfTexture = $derived.by(() => {
-		const modelDF = getLoadedAssets().textures[`${modelName}_DF`];
-		const materialDF = getLoadedAssets().textures[`${material.name}_DF`];
-		// materialRef.needsUpdate = true;
-		if (material.name.includes(modelName)) {
-			return modelDF;
-		} else if (materialDF) {
-			return materialDF;
-		} else {
-			return getLoadedAssets().textures[`default`];
-		}
-	});
+	const dfTexture = $derived(
+		getLoadedAssets().textures[`${material?.name}_DF`] || getLoadedAssets().textures[`default`]
+	);
 
-	const { id, color, colors, defaultColor, ...matConfig } = $derived(material);
+	const color = $derived(material?.color);
 	const newColor = $derived.by(() => {
 		if (setColor) {
 			return setColor.color;
 		}
-		return color?.color;
+		return color;
 	});
 
 	let timeUniform = { value: 0 };
@@ -82,31 +71,33 @@
         `
 		);
 	};
+
+	$effect(() => {
+		const _deps = material;
+		if (materialRef) {
+			console.log(material);
+			materialRef.needsUpdate = true;
+			materialRef.version++;
+		}
+	});
 </script>
 
-{#if $dfTexture && $ormTexture && $aoTexture}
+{#if material && $dfTexture && $ormTexture && $aoTexture}
 	<T.MeshStandardMaterial
 		bind:ref={materialRef}
-		name={material.name}
+		name={material?.name}
 		map={$dfTexture}
 		roughnessMap={$ormTexture}
 		metalnessMap={$ormTexture}
-		roughness={material.roughness}
-		metalness={material.metalness}
-		opacity={material.opacity}
+		roughness={material?.roughness}
+		metalness={material?.metalness}
+		opacity={material?.opacity}
 		transparent={material.transparent}
-		aoMap={$aoTexture}
+		aoMap={aoMap || $aoTexture}
 		color={newColor}
 		emissive="white"
 		emissiveIntensity={emissiveIntensity.current}
-		aoMapIntensity={1}
+		aoMapIntensity={1.5}
 		needsUpdate={true}
-		oncreate={(ref) => {
-			$effect(() => {
-				ref.transparent = material.transparent;
-				ref.needsUpdate = true;
-			});
-			ref.onBeforeCompile = injectPulsing;
-		}}
 	/>
 {/if}

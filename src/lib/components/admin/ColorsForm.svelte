@@ -5,7 +5,7 @@
 
 	const config = getContext('config');
 
-	const colors = $derived(config.colors);
+	const colors = $derived(config.data.colors);
 </script>
 
 {#snippet renderColor(color)}
