@@ -10,8 +10,10 @@
 
 	async function checkCDN() {
 		const assets = [
-			...Object.values(config.data.models).map((m) => m.url),
-			...config.data.textures.map((t) => t.url)
+			...Object.values(config.data.models).map(
+				(m) => m.url + '?v=' + new Date(m.updatedAt).getTime()
+			),
+			...config.data.textures.map((t) => t.url + '?v=' + new Date(t.updatedAt).getTime())
 		].filter((url) => url && !url.startsWith('blob:'));
 
 		if (assets.length === 0) {

@@ -84,7 +84,9 @@
 			}
 		});
 		Object.values(textures).forEach((texture) => {
-			loadedAssets.textures[texture.name] = useTexture(texture.url, {
+			const time = texture.updatedAt ? new Date(texture.updatedAt).getTime() : Date.now();
+			const newUrl = texture.url.startsWith('blob:') ? texture.url : texture.url + '?v=' + time;
+			loadedAssets.textures[texture.name] = useTexture(newUrl, {
 				transform: (tx) => {
 					tx.name = texture.name;
 					tx.image.crossOrigin = 'anonymous';
