@@ -297,9 +297,9 @@ export const actions = {
 	saveSettings: async ({ request, locals }) => {
 		const formData = await request.formData();
 
-		// await updateConfig({ formData, locals });
-		// await updateColors({ formData, locals });
-		// await updateMaterials({ formData, locals });
+		await updateConfig({ formData, locals });
+		await updateColors({ formData, locals });
+		await updateMaterials({ formData, locals });
 		await updateModels({ formData, locals });
 		await updateTextures({ formData, locals });
 

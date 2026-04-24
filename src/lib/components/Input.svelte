@@ -7,11 +7,16 @@
 		value = $bindable(),
 		checked = $bindable(),
 		style = '',
+		valueOnly = false,
 		...props
 	} = $props();
 </script>
 
-<label for={id} {style}>
+{#if valueOnly}
+	<p>{title}: {value}</p>
+{/if}
+
+<label for={id} {style} class={props?.hidden ? 'hidden' : ''}>
 	{title}
 	{#if type === 'select'}
 		<select name={id} {id} bind:value {...props}>
@@ -43,5 +48,9 @@
 	input,
 	select {
 		width: 100%;
+	}
+
+	.hidden {
+		display: none;
 	}
 </style>

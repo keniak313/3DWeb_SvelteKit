@@ -20,7 +20,8 @@ export async function updateTextures({ formData, locals }: { formData: FormData;
 		newTextures.push({
 			id: id,
 			name: name,
-			url: url
+			url: url,
+			updatedAt: new Date().toISOString()
 		});
 	}
 

@@ -37,21 +37,18 @@
 
 	const loadModels = (models) => {
 		if (!loadedAssets.models) loadedAssets.models = {};
-		// loadedAssets.models = Object.values(models).reduce((acc, model) => {
-		// 	const time = new Date(model?.updatedAt).getTime();
-		// 	const url = model.url.startsWith('blob:') ? model.url : model.url + '?v=' + time;
-		// 	acc[model.name] = useGltf(url);
-		// 	return acc;
-		// }, {});
 		Object.values(models).forEach((model) => {
-			if (!loadedAssets.models[model.name]) {
-				const time = model.updatedAt ? new Date(model.updatedAt).getTime() : Date.now();
-				const url = model.url.startsWith('blob:') ? model.url : model.url + '?v=' + time;
+			const time = model.updatedAt ? new Date(model.updatedAt).getTime() : Date.now();
+			const newUrl = model.url.startsWith('blob:') ? model.url : model.url + '?v=' + time;
 
-				console.log('Rejestruję nowy model:', model.name, url);
+			// SPRAWDZAMY: Czy mamy już ten model ORAZ czy jego URL jest taki sam?
+			// Jeśli URL jest inny (np. nowy blob), musimy wywołać useGltf ponownie.
+			if (!loadedAssets.models[model.name] || loadedAssets.models[model.name].url !== newUrl) {
+				console.log('Ładowanie/Aktualizacja modelu:', model.name);
 
-				// Rejestrujemy loader
-				loadedAssets.models[model.name] = useGltf(url);
+				loadedAssets.models[model.name] = useGltf(newUrl);
+				// Opcjonalnie zapisz URL w obiekcie, żeby móc go porównać przy następnej pętli
+				loadedAssets.models[model.name].url = newUrl;
 			}
 		});
 

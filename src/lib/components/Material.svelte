@@ -75,7 +75,6 @@
 	$effect(() => {
 		const _deps = material;
 		if (materialRef) {
-			console.log(material);
 			materialRef.needsUpdate = true;
 			materialRef.version++;
 		}

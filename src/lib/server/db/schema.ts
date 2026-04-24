@@ -73,7 +73,14 @@ export const texture = sqliteTable('texture', {
 		.primaryKey()
 		.$defaultFn(() => nanoid(10)),
 	name: text('name').notNull(),
-	url: text('url')
+	url: text('url'),
+	createdAt: text('created_at', { mode: 'text' })
+		.notNull()
+		.default(sql`CURRENT_TIMESTAMP`),
+	updatedAt: text('updated_at', { mode: 'text' })
+		.notNull()
+		.default(sql`CURRENT_TIMESTAMP`)
+		.$onUpdate(() => sql`CURRENT_TIMESTAMP`)
 });
 
 export const session = sqliteTable('session', {

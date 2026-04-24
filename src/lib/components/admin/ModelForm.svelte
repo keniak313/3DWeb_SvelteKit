@@ -124,8 +124,14 @@
 					</button>
 				</div>
 				<Input id="model-id" value={model.id} hidden />
-				<Input id={'model-name-' + model.id} title="Name" bind:value={model.name} readonly />
-				<Input id={'model-url-' + model.id} title="URL" bind:value={model.url} readonly />
+				<Input
+					id={'model-name-' + model.id}
+					title="Name"
+					bind:value={model.name}
+					hidden
+					valueOnly
+				/>
+				<Input id={'model-url-' + model.id} title="URL" bind:value={model.url} hidden valueOnly />
 				<Input
 					id={'model-displayName-' + model.id}
 					title="Display Name"
@@ -155,7 +161,13 @@
 							<div class={config.selectedAsset?.part?.id === part.id ? '' : 'hidden'}>
 								<Input id="part-id" value={part.id} hidden />
 								<Input id={'part-model-id-' + part.id} value={model.id} hidden />
-								<Input id={'part-name-' + part.id} title="Name" bind:value={part.name} readonly />
+								<Input
+									id={'part-name-' + part.id}
+									title="Name"
+									bind:value={part.name}
+									hidden
+									valueOnly
+								/>
 								<Input
 									id={'part-displayName-' + part.id}
 									title="Display Name"
@@ -339,6 +351,9 @@
 
 			if (checkExisting) {
 				const existingModel = checkExisting;
+				existingModel.url = url;
+				existingModel.file = file;
+				existingModel.updatedAt = new Date().toISOString();
 
 				const newParts = gltf.children.reduce((acc, part) => {
 					if (!part.name.includes('use')) return acc;
@@ -381,8 +396,9 @@
 
 			if (!modelExists) {
 				models.push(newModel);
-				// models = [...models, newModel];
 			}
+
+			models = [...models];
 
 			console.log('FILE??', file);
 			console.log('GLB', gltf);

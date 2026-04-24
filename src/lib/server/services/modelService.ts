@@ -39,11 +39,12 @@ export async function updateModels({ formData, locals }) {
 	});
 
 	const newModels = [];
-	const updatedIcons = [];
 
 	for await (const modelId of modelIds) {
 		const icon = formData.get(`model-icon-${modelId}`);
 		const file = formData.get(`model-file-${modelId}`);
+		console.log('NEW FILE FOUND', file);
+		console.log('NEW ICON FOUND', icon);
 		let uploadedIcon = null;
 		let uploadedFile = null;
 
@@ -55,10 +56,6 @@ export async function updateModels({ formData, locals }) {
 				allowOverwrite: true
 			});
 			uploadedIcon = url;
-			updatedIcons.push({
-				id: modelId,
-				icon: url
-			});
 		}
 
 		if (file instanceof File) {

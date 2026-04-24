@@ -163,12 +163,14 @@
 						existing.file = file;
 						existing.url = URL.createObjectURL(file);
 						existing.isNew = true;
+						existing.updatedAt = new Date().toISOString();
 					} else {
 						textures.push({
 							id: nanoid(5),
 							name: file.name.split('.')[0],
 							file: file,
 							url: URL.createObjectURL(file),
+							updatedAt: new Date().toISOString(),
 							isNew: true
 						});
 					}
