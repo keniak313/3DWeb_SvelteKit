@@ -117,14 +117,17 @@
 	// loadTextures(textures);
 
 	$effect(() => {
-		loadModels(models);
-		loadTextures(textures);
+		// loadModels(models);
+		// loadTextures(textures);
 		// const currentModels = models;
 		// const currentTextures = textures;
 
-		// untrack(() => {
-		// 	loadModels(currentModels);
-		// 	loadTextures(currentTextures);
-		// });
+		const modelUrls = models.map((m) => m.url).join(',');
+		const textureUrls = textures.map((t) => t.url).join(',');
+
+		untrack(() => {
+			loadModels(models);
+			loadTextures(textures);
+		});
 	});
 </script>

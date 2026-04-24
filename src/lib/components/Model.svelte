@@ -11,7 +11,7 @@
 
 	const config = getContext('config');
 
-	const gltf = $derived(getLoadedAssets().models[model.name]);
+	const gltf = $derived(getLoadedAssets().models?.[model.name]);
 
 	const { onPointerEnter, onPointerLeave } = useCursor('pointer');
 
@@ -20,7 +20,7 @@
 
 {#if $gltf}
 	{#each $gltf.scene.children as mesh, index (mesh.uuid)}
-		{@const part = model.parts[mesh.name]}
+		{@const part = model.parts ? model.parts[mesh.name] : null}
 		<T.Mesh
 			name={mesh.name}
 			geometry={mesh.geometry}

@@ -147,6 +147,7 @@
 	import { WebGLRenderer } from 'three';
 	import { getContext, onMount } from 'svelte';
 	import { decodeConfig } from '$lib/utilities/helpers';
+	import { getLoadedAssets } from './AssetPreloader.svelte';
 
 	let isStudio = $state(false);
 
@@ -158,7 +159,7 @@
 	onMount(() => {
 		if (urlItem) {
 			const decoded = decodeConfig(urlItem);
-			config.setAssetFromUrl({ modelName: decoded.modelName, parts: decoded.parts });
+			config?.setAssetFromUrl({ modelName: decoded.modelName, parts: decoded.parts });
 		}
 	});
 </script>
