@@ -84,6 +84,15 @@ export const createConfig = (initData) => {
 		);
 	});
 
+	const resetAzimuthAngle = () => {
+		if (sceneConfig?.controls) {
+			const currentAzimuth = sceneConfig.controls.azimuthAngle;
+			const normalizedAzimuth = currentAzimuth % (Math.PI * 2);
+
+			sceneConfig.controls.azimuthAngle = normalizedAzimuth;
+		}
+	};
+
 	const selectedAsset = $derived({
 		model: modelsHydrated[selected.modelName],
 		part: modelsHydrated[selected.modelName]?.parts[selected.partName]
@@ -97,9 +106,11 @@ export const createConfig = (initData) => {
 			const model = data.models.find((m) => m.name === selected.modelName);
 			const part = model.parts[selected.partName];
 
+			resetAzimuthAngle();
 			sceneConfig.controls?.setLookAt(...part.position, ...part.target, true);
 		} else {
 			setUrl(data.models.find((m) => m.name === selected.modelName));
+			resetAzimuthAngle();
 			sceneConfig.controls?.setLookAt(
 				...sceneConfig.camera.position,
 				...sceneConfig.camera.target,
@@ -152,6 +163,7 @@ export const createConfig = (initData) => {
 		selected.modelName = null;
 		selected.partName = null;
 
+		resetAzimuthAngle();
 		sceneConfig.controls?.setLookAt(
 			...sceneConfig.camera.position,
 			...sceneConfig.camera.target,

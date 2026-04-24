@@ -35,6 +35,23 @@
 		hdri = texture;
 	};
 
+	let isCDNReady = $state(false);
+	let isChecking = $state(false);
+
+	async function checkAssetsReady(assets) {
+		const urls = assets.map((a) => a.url);
+
+		// Tworzymy tablicę obietnic sprawdzających nagłówki plików
+		const checks = urls.map((url) =>
+			fetch(url, { method: 'HEAD' }) // HEAD nie pobiera pliku, tylko sprawdza czy jest
+				.then((res) => res.ok)
+				.catch(() => false)
+		);
+
+		const results = await Promise.all(checks);
+		return results.every((isOk) => isOk === true); // Zwraca true tylko jeśli WSZYSTKIE są gotowe
+	}
+
 	const loadModels = (models) => {
 		if (!loadedAssets.models) loadedAssets.models = {};
 		Object.values(models).forEach((model) => {
@@ -59,6 +76,13 @@
 
 	const loadTextures = (textures) => {
 		if (!loadedAssets.textures) loadedAssets.textures = {};
+		Object.keys(loadedAssets.textures).forEach((name) => {
+			if (name === 'default') return;
+			const exists = textures.find((t) => t.name === name);
+			if (!exists) {
+				delete loadedAssets.textures[name];
+			}
+		});
 		Object.values(textures).forEach((texture) => {
 			loadedAssets.textures[texture.name] = useTexture(texture.url, {
 				transform: (tx) => {
@@ -73,37 +97,22 @@
 				}
 			});
 		});
-		// loadedAssets.textures = Object.fromEntries(
-		// 	textures.map((t) => [
-		// 		t.name,
-		// 		useTexture(t.url, {
-		// 			transform: (tx) => {
-		// 				tx.name = t.name;
-		// 				tx.image.crossOrigin = 'anonymous';
-		// 				tx.flipY = false;
-		// 				tx.wrapS = tx.wrapT = RepeatWrapping;
-		// 				if (t.name.includes('ORM') || t.name.includes('AO')) {
-		// 					tx.colorSpace = LinearSRGBColorSpace;
-		// 				}
-		// 				return tx;
-		// 			}
-		// 		})
-		// 	])
-		// );
 
-		loadedAssets.textures['default'] = useTexture(asset('/Textures/default.webp'), {
-			transform: (tx) => {
-				tx.name = 'default';
-				tx.flipY = false;
-				tx.wrapS = tx.wrapT = RepeatWrapping;
-				return tx;
-			}
-		});
+		if (!loadedAssets.textures['default']) {
+			loadedAssets.textures['default'] = useTexture(asset('/Textures/default.webp'), {
+				transform: (tx) => {
+					tx.name = 'default';
+					tx.flipY = false;
+					tx.wrapS = tx.wrapT = RepeatWrapping;
+					return tx;
+				}
+			});
+		}
 	};
 
 	loadHDR();
-	loadModels(models);
-	loadTextures(textures);
+	// loadModels(models);
+	// loadTextures(textures);
 
 	$effect(() => {
 		loadModels(models);

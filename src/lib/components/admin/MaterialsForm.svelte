@@ -15,6 +15,8 @@
 	});
 
 	const selectedMat = $state({ id: null });
+
+	let texturesToDelete = $state([]);
 </script>
 
 <div>
@@ -148,37 +150,6 @@
 				</div>
 			{/if}
 		{/each}
-		<Input
-			id="texture"
-			title="ADD TEXTURES"
-			type="file"
-			multiple
-			accept="image/webp"
-			onchange={(e) => {
-				console.log(e.target.files);
-				for (const file of e.target.files) {
-					const existing = textures.find((t) => t.name === file.name.split('.')[0]);
-					console.log(existing);
-					if (existing) {
-						existing.file = file;
-						existing.url = URL.createObjectURL(file);
-						existing.isNew = true;
-						existing.updatedAt = new Date().toISOString();
-					} else {
-						textures.push({
-							id: nanoid(5),
-							name: file.name.split('.')[0],
-							file: file,
-							url: URL.createObjectURL(file),
-							updatedAt: new Date().toISOString(),
-							isNew: true
-						});
-					}
-				}
-				e.target.value = '';
-				console.log(textures);
-			}}
-		/>
 	</div>
 	<button
 		type="button"
@@ -200,6 +171,53 @@
 	>
 	<!-- <button type="submit">Save Materials</button>
 	</form> -->
+
+	<Input
+		id="texture"
+		title="ADD TEXTURES"
+		type="file"
+		multiple
+		accept="image/webp"
+		onchange={(e) => {
+			console.log(e.target.files);
+			for (const file of e.target.files) {
+				const existing = textures.find((t) => t.name === file.name.split('.')[0]);
+				console.log(existing);
+				if (existing) {
+					existing.file = file;
+					existing.url = URL.createObjectURL(file);
+					existing.isNew = true;
+					existing.updatedAt = new Date().toISOString();
+				} else {
+					textures.push({
+						id: nanoid(5),
+						name: file.name.split('.')[0],
+						file: file,
+						url: URL.createObjectURL(file),
+						updatedAt: new Date().toISOString(),
+						isNew: true
+					});
+				}
+			}
+			e.target.value = '';
+			console.log(textures);
+		}}
+	/>
+	<h2>ALL TEXTURES</h2>
+	<Input id="texturesToDelete" value={texturesToDelete} />
+	{#each textures as texture (texture.id)}
+		<div class="texture">
+			<Image src={texture.url} alt={texture.name} width={100} height={100} />
+			<p>{texture.name}</p>
+			<button
+				type="button"
+				onclick={() => {
+					texturesToDelete.push(texture.id);
+					textures.splice(textures.indexOf(texture), 1);
+				}}>Remove</button
+			>
+		</div>
+	{/each}
 </div>
 
 <style>

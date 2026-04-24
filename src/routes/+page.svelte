@@ -1,5 +1,8 @@
 <script lang="ts">
+	import CdnCheck from '$lib/components/CdnCheck.svelte';
 	import Product from '$lib/components/Product.svelte';
 </script>
 
-<Product />
+<CdnCheck>
+	<Product />
+</CdnCheck>

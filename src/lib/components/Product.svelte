@@ -139,9 +139,7 @@
 	import { Canvas } from '@threlte/core';
 	import Scene from '../components/Scene.svelte';
 	import { Studio } from '@threlte/studio';
-
 	import { Suspense, useProgress } from '@threlte/extras';
-
 	import { fade } from 'svelte/transition';
 	import Loader from './Loader.svelte';
 	import ProductUI from './ProductUI.svelte';
@@ -164,8 +162,6 @@
 		}
 	});
 </script>
-
-<!-- <TweakPane {controls} {postProcessConfig} /> -->
 
 <section>
 	<Loader progress={$progress} />

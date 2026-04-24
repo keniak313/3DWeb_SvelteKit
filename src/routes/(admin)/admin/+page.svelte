@@ -6,6 +6,7 @@
 	import NewModelForm from '$lib/components/admin/NewModelForm.svelte';
 	import SceneForm from '$lib/components/admin/SceneForm.svelte';
 	import TextureForm from '$lib/components/admin/TextureForm.svelte';
+	import CdnCheck from '$lib/components/CdnCheck.svelte';
 	import InputSelect from '$lib/components/InputSelect.svelte';
 	import Loader from '$lib/components/Loader.svelte';
 	import Product from '$lib/components/Product.svelte';
@@ -53,28 +54,10 @@
 <div class="wrapper">
 	{#if isUploading}
 		<Loader {progress} isServer={true} isShown={isUploading} />
-		<!-- <div
-			transition:fade={{
-				duration: 200
-			}}
-			class="loader-wrapper"
-		>
-			<p class="loading">Loading</p>
-			<div class="bar-wrapper">
-				<div class="bar" style="width: {progressWidth}%"></div>
-			</div>
-		</div> -->
-		<!-- <div class="loading-wrapper">
-			{#if $progress < 95}
-				<p>WYSYŁANIE PLIKÓW...</p>
-			{:else}
-				<p>PRZETWARZANIE NA SERWERZE (PROSZĘ CZEKAĆ)...</p>
-			{/if}
-			<progress value={$progress} max="100"></progress>
-			<p>{Math.round($progress)}%</p>
-		</div> -->
 	{/if}
-	<Product />
+	<CdnCheck>
+		<Product />
+	</CdnCheck>
 	<div class="forms">
 		<div class="nav">
 			<button onclick={() => (selectedMenu = 'scene')}>Scene</button>
@@ -117,7 +100,7 @@
 						if (texture?.isNew) {
 							console.log('NEW TEXTURE FOUND', texture.url);
 							formData.append('texture-id', texture.id);
-							formData.append(`texture-file-${texture.id}`, texture.file, texture.name);
+							formData.append(`texture-file-${texture.id}`, texture.file, texture.file.name);
 						}
 					});
 

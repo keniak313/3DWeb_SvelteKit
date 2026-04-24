@@ -17,15 +17,13 @@
 
 	let materialRef = $state();
 
-	const aoTexture = $derived(getLoadedAssets().textures[`default`]);
+	const defaultTexture = $derived(getLoadedAssets().textures[`default`]);
 
 	const ormTexture = $derived(
-		getLoadedAssets().textures[`${material?.name}_ORM`] || getLoadedAssets().textures[`default`]
+		getLoadedAssets().textures[`${material?.name}_ORM`] || defaultTexture
 	);
 
-	const dfTexture = $derived(
-		getLoadedAssets().textures[`${material?.name}_DF`] || getLoadedAssets().textures[`default`]
-	);
+	const dfTexture = $derived(getLoadedAssets().textures[`${material?.name}_DF`] || defaultTexture);
 
 	const color = $derived(material?.color);
 	const newColor = $derived.by(() => {
@@ -81,7 +79,7 @@
 	});
 </script>
 
-{#if material && $dfTexture && $ormTexture && $aoTexture}
+{#if material && $dfTexture && $ormTexture && $defaultTexture}
 	<T.MeshStandardMaterial
 		bind:ref={materialRef}
 		name={material?.name}
@@ -92,7 +90,7 @@
 		metalness={material?.metalness}
 		opacity={material?.opacity}
 		transparent={material.transparent}
-		aoMap={aoMap || $aoTexture}
+		aoMap={aoMap || $defaultTexture}
 		color={newColor}
 		emissive="white"
 		emissiveIntensity={emissiveIntensity.current}
