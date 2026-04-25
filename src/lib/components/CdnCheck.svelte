@@ -22,20 +22,20 @@
 		}
 
 		// Prosty mechanizm sprawdzania (np. max 30 prób co 2 sekundy)
-		for (let i = 0; i < 30; i++) {
-			try {
-				const results = await Promise.all(assets.map((url) => fetch(url, { method: 'HEAD' })));
 
-				if (results.every((res) => res.ok)) {
-					isReady = true;
-					return;
-				}
-			} catch (e) {
-				console.log('Czekam na propagację CDN...');
+		try {
+			const results = await Promise.all(assets.map((url) => fetch(url, { method: 'HEAD' })));
+
+			if (results.every((res) => res.ok)) {
+				isReady = true;
+				return;
 			}
-			await new Promise((r) => setTimeout(r, 2000));
+		} catch (e) {
+			console.log('Czekam na propagację CDN...');
 		}
-		error = 'Pliki nie pojawiły się na serwerze w odpowiednim czasie.';
+		await new Promise((r) => setTimeout(r, 2000));
+
+		error = 'CDN is still synchronizing. Please try again later.';
 	}
 
 	onMount(() => {
@@ -44,16 +44,27 @@
 </script>
 
 {#if error}
-	<div class="error-screen">
+	<div class="wrapper error-screen">
 		<p>{error}</p>
-		<button onclick={() => window.location.reload()}>Odśwież</button>
+		<button onclick={() => window.location.reload()}>Refresh</button>
 	</div>
 {:else if isReady}
 	{@render children?.()}
 {:else}
-	<div class="cdn-loader">
-		<p>SYNCHRONIZACJA Z SERWEREM...</p>
-		<p class="sub">To może potrwać do minuty po wrzuceniu nowych plików.</p>
+	<div class="wrapper cdn-loader">
+		<p>Synchronizing with the server...</p>
+		<p class="sub">This may take up to a few minutes after uploading new files.</p>
 		<div class="spinner"></div>
 	</div>
 {/if}
+
+<style>
+	.wrapper {
+		display: flex;
+		flex-direction: column;
+		width: 100vw;
+		height: 100vh;
+		align-items: center;
+		justify-content: center;
+	}
+</style>

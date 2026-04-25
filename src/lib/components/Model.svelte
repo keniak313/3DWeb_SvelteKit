@@ -7,14 +7,13 @@
 	import { getLoadedAssets } from './AssetPreloader.svelte';
 	import { Spring, Tween } from 'svelte/motion';
 	import { backOut, cubicInOut, cubicOut, elasticInOut, expoOut } from 'svelte/easing';
+	import { getAppConfig, type AppConfig } from '$lib/state/config.svelte';
 
 	const { renderer, camera } = useThrelte();
 
 	let { model, isDragging } = $props();
 
-	const config = getContext('config');
-
-	let selectedModel = $state(config.selectedAsset.model?.name);
+	const config = getAppConfig();
 
 	const gltf = $derived(getLoadedAssets().models?.[model.name]);
 
@@ -27,16 +26,22 @@
 		easing: expoOut
 	});
 
+	let lastModelName = null;
+
 	$effect(() => {
-		const isSelected = config.selected.modelName === model.name;
+		const currentName = config.selected.modelName;
+		const isSelected = currentName === model.name;
 
 		if (isSelected) {
-			// Restart: skok do 0 i płynnie do 1
-			scaleTween.set(0, { duration: 0 });
-			scaleTween.set(1);
+			// KLUCZOWY WARUNEK: tylko jeśli nazwa jest inna niż zapamiętana
+			if (currentName !== lastModelName) {
+				scaleTween.set(0, { duration: 0 });
+				scaleTween.set(1);
+				lastModelName = currentName;
+			}
 		} else {
-			// Twarde zero dla pozostałych modeli
 			scaleTween.set(0, { duration: 0 });
+			lastModelName = null;
 		}
 	});
 

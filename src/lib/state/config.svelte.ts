@@ -1,9 +1,12 @@
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
+import type { Color, Material, Model, Texture } from '$lib/server/db/schema';
 import { encodeConfig } from '$lib/utilities/helpers';
 import type { CameraControlsRef } from '@threlte/extras';
 import { untrack } from 'svelte';
 import { SvelteMap } from 'svelte/reactivity';
+
+import { getContext, setContext } from 'svelte';
 
 const setUrl = (model) => {
 	const curUrl = !page.route.id.includes('(admin)');
@@ -27,7 +30,12 @@ const setUrl = (model) => {
 	goto(`/?item=${url}`);
 };
 
-export const createConfig = (initData) => {
+export const createConfig = (initData: {
+	models: Model[];
+	colors: Color[];
+	materials: Material[];
+	textures: Texture[];
+}) => {
 	const configData = initData.config;
 
 	const sceneConfig = $state({
@@ -232,3 +240,10 @@ export const createConfig = (initData) => {
 		updateData
 	};
 };
+
+export type AppConfig = ReturnType<typeof createConfig>;
+
+export function getAppConfig() {
+	const config = getContext<AppConfig>('config');
+	return config;
+}

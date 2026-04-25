@@ -12,7 +12,7 @@
 
 	const emissiveIntensity = new Tween(0, {
 		duration: 200,
-		easing: backInOut
+		easing: cubicInOut
 	});
 
 	$effect(() => {
