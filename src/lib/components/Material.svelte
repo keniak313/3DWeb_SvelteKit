@@ -5,11 +5,15 @@
 	import { Color } from 'three';
 	import RimShader from './RimShader.svelte';
 	import { getHDRI, getLoadedAssets } from './AssetPreloader.svelte';
-	import { Spring } from 'svelte/motion';
+	import { Spring, Tween } from 'svelte/motion';
+	import { backInOut, cubicIn, cubicInOut, elasticInOut } from 'svelte/easing';
 
 	let { aoMap = null, material, modelName, setColor, isHovered } = $props();
 
-	const emissiveIntensity = new Spring(0);
+	const emissiveIntensity = new Tween(0, {
+		duration: 200,
+		easing: backInOut
+	});
 
 	$effect(() => {
 		emissiveIntensity.set(isHovered ? 0.3 : 0);

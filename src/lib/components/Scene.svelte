@@ -41,8 +41,9 @@
 	import AssetPreloader, { getHDRI } from './AssetPreloader.svelte';
 	import Model from './Model.svelte';
 	import { scale } from '$lib/transitions';
-	import { getContext, setContext } from 'svelte';
+	import { getContext, setContext, untrack } from 'svelte';
 	import { page } from '$app/state';
+	import { Spring } from 'svelte/motion';
 
 	let isAdmin = $derived(page.route.id?.includes('(admin)'));
 
@@ -135,12 +136,8 @@
 	shadow.bias={0}
 	color="#ffffff"
 />
-{#each Object.values(models) as model (model.id)}
-	{#if model.name === config.selectedAsset.model?.name}
-		<T.Group in={scale(0)}>
-			<Model {model} {isDragging} />
-		</T.Group>
-	{/if}
+{#each Object.values(models) as model, index (model.id)}
+	<Model {model} {isDragging} />
 {/each}
 
 <!-- <T.Mesh position={[0, 0, 0]} scale={2} rotation.x={-1 * 0.5 * Math.PI}>

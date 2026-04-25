@@ -7,6 +7,7 @@
 	import { getContext } from 'svelte';
 	import { Image } from '@unpic/svelte';
 	import InputSelect from '../InputSelect.svelte';
+	import { useDraco } from '@threlte/extras';
 
 	let selectedModel = $state({ id: null });
 	let selecedPart = $state({ id: null });
@@ -20,6 +21,8 @@
 	let modelExists = $state(false);
 
 	let newModel = $state();
+
+	const dracoLoader = useDraco();
 
 	const generateIcon = async (model) => {
 		const targetSize = 512;
@@ -318,8 +321,23 @@
 			const file = e.target.files[0];
 			const url = URL.createObjectURL(file);
 			const loader = new GLTFLoader();
+			loader.setDRACOLoader(dracoLoader);
 
-			const gltf = (await loader.loadAsync(url)).scene;
+			const gltfData = await loader.loadAsync(url);
+			const gltf = gltfData.scene;
+
+			gltf.traverse((obj) => {
+				if (obj.isMesh) {
+					// Wymuszamy przeliczenie danych, których brakuje po Draco
+					obj.geometry.computeBoundingSphere();
+					obj.geometry.computeBoundingBox();
+
+					// Opcjonalnie: upewnij się, że cienie nie wywalą błędu
+					obj.castShadow = true;
+					obj.receiveShadow = true;
+				}
+			});
+
 			const checkExisting = models.find((model) => model.name === file.name.split('.')[0]);
 			console.log('Existing:', $state.snapshot(checkExisting));
 

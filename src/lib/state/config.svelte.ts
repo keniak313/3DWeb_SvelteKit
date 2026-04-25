@@ -217,6 +217,9 @@ export const createConfig = (initData) => {
 		get selectedAsset() {
 			return selectedAsset;
 		},
+		get selected() {
+			return selected;
+		},
 		sceneConfig,
 		setSelected,
 		setAssetMaterial,

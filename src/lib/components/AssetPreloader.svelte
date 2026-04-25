@@ -15,7 +15,7 @@
 </script>
 
 <script lang="ts">
-	import { useGltf, useProgress, useTexture } from '@threlte/extras';
+	import { useGltf, useProgress, useTexture, useDraco } from '@threlte/extras';
 	import { getContext, onMount, untrack } from 'svelte';
 	import { EquirectangularReflectionMapping, LinearSRGBColorSpace, RepeatWrapping } from 'three';
 	import { HDRLoader } from 'three/examples/jsm/Addons.js';
@@ -63,14 +63,18 @@
 			if (!loadedAssets.models[model.name] || loadedAssets.models[model.name].url !== newUrl) {
 				console.log('Ładowanie/Aktualizacja modelu:', model.name);
 
-				loadedAssets.models[model.name] = useGltf(newUrl);
+				loadedAssets.models[model.name] = useGltf(newUrl, {
+					dracoLoader: useDraco()
+				});
 				// Opcjonalnie zapisz URL w obiekcie, żeby móc go porównać przy następnej pętli
 				loadedAssets.models[model.name].url = newUrl;
 			}
 		});
 
 		if (!loadedAssets.models['BG01']) {
-			loadedAssets.models['BG01'] = useGltf(asset('/3D/BG01.glb'));
+			loadedAssets.models['BG01'] = useGltf(asset('/3D/BG01.glb'), {
+				dracoLoader: useDraco()
+			});
 		}
 	};
 
