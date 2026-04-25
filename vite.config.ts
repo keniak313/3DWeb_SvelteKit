@@ -5,7 +5,12 @@ import { enhancedImages } from '@sveltejs/enhanced-img';
 
 export default defineConfig({
 	plugins: [sveltekit(), threlteStudio(), enhancedImages()],
+	resolve: {
+		alias: {
+			three: 'three'
+		}
+	},
 	ssr: {
-		noExternal: ['camera-controls', 'postprocessing', 'gsap']
+		noExternal: ['camera-controls', 'postprocessing', 'gsap', 'three']
 	}
 });

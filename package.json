@@ -54,6 +54,12 @@
 		"tweakpane": "^4.0.5"
 	},
 	"overrides": {
-		"three": "^0.183.2"
+		"three": "^0.183.2",
+		"@threlte/core": {
+			"three": "^0.183.2"
+		},
+		"threlte-postprocessing": {
+			"three": "^0.183.2"
+		}
 	}
 }
