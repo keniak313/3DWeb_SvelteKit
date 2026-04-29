@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { T, useThrelte } from '@threlte/core';
-	import { useCursor } from '@threlte/extras';
+	import { GLTF, HTML, useCursor } from '@threlte/extras';
 	import Material from './Material.svelte';
 	import { Color, MeshStandardMaterial } from 'three';
 	import { getContext, onMount } from 'svelte';
@@ -8,16 +8,37 @@
 	import { Spring, Tween } from 'svelte/motion';
 	import { backOut, cubicInOut, cubicOut, elasticInOut, expoOut } from 'svelte/easing';
 	import { getAppConfig, type AppConfig } from '$lib/state/config.svelte';
+	import { checkName } from '$lib/utilities/helpers';
+	import { get, writable } from 'svelte/store';
+	import { fade } from 'svelte/transition';
 
 	const { renderer, camera } = useThrelte();
 
-	let { model, isDragging } = $props();
+	let { model, isDragging, children = () => {} } = $props();
 
 	const config = getAppConfig();
 
 	const gltf = $derived(getLoadedAssets().models?.[model.name]);
 
-	const { onPointerEnter, onPointerLeave } = useCursor('pointer');
+	const sockets = $derived.by(() => {
+		let attachments = {};
+
+		if (model.sockets) {
+			Object.values(model.sockets).forEach((m) => {
+				console.log('SOCKET', m);
+				if (!m.attachment) return;
+				const gltf = getLoadedAssets().models?.[m.attachment.name];
+				console.log(gltf);
+				attachments = { ...attachments, [m.name]: gltf };
+			});
+			console.log(attachments);
+			return attachments;
+		}
+		return null;
+	});
+
+	let isHovered = $state(false);
+	useCursor(isHovered ? 'pointer' : 'default');
 
 	let hoveredPartName = $state();
 
@@ -44,104 +65,121 @@
 			lastModelName = null;
 		}
 	});
-
-	$effect(() => {
-		if ($gltf) {
-			console.log($gltf);
-			renderer.compile($gltf.scene, camera);
-		}
-	});
 </script>
 
-<T.Group scale={scaleTween.current}>
-	{#if $gltf}
-		{#each $gltf.scene.children as mesh, index (mesh.uuid)}
-			{@const part = model.parts ? model.parts[mesh.name] : null}
-			<T.Mesh
-				name={mesh.name}
-				geometry={mesh.geometry}
-				position={[mesh.position.x, mesh.position.y, mesh.position.z]}
-				rotation={[mesh.rotation.x, mesh.rotation.y, mesh.rotation.z]}
-				scale={[mesh.scale.x, mesh.scale.y, mesh.scale.z]}
-				castShadow={true}
-				receiveShadow={true}
-				onpointerenter={(e) => {
-					if (isDragging) {
-						hoveredPartName = null;
-						return;
-					}
-					e.stopPropagation();
-					if (!mesh.name.includes('use')) return;
-					onPointerEnter();
-					if (config.selectedAsset.part?.name !== part.name) {
-						hoveredPartName = part.name;
-					}
-				}}
-				onpointerleave={(e) => {
-					e.stopPropagation();
-					onPointerLeave();
-					hoveredPartName = null;
-				}}
-				onclick={(e) => {
-					e.stopPropagation();
-					if (!mesh.name.includes('use')) return;
-					config.setSelected({
-						modelName: model.name,
-						partName: part.name
-					});
-					hoveredPartName = null;
-				}}
-				material={new MeshStandardMaterial({
-					color: 'magenta'
-				})}
-			>
-				{#if mesh.name.includes('use')}
-					<Material
-						material={part.material}
-						modelName={model.name}
-						setColor={part.color}
-						aoMap={mesh.material.aoMap}
-						isHovered={hoveredPartName === part.name}
-					/>
-				{:else}
-					{@const mat = mesh.material}
-					<T.MeshStandardMaterial aoMap={mat.aoMap} aoMapIntensity={2} color={mat.color} />
-				{/if}
-			</T.Mesh>
-		{/each}
-	{/if}
-</T.Group>
-
-<!-- {#each mesh.children as child (child.uuid)}
-					<HTML
-						position={[child.position.x, child.position.y, child.position.z]}
-						occlude
-						pointerEvents="all"
-						onvisibilitychange={(e) => {
-							part.visible = e;
-						}}
-					>
-						{#if part.visible}
-							<div class="info" transition:fade>
-								<button
-									onclick={(e) => {
-										setSelected({
-											model: model,
-											part: model.parts[mesh.name],
-											mesh: mesh
-										});
-									}}
-								>
-								</button>
-								{#if getSelected()?.part?.name === mesh.name}
-									<div class="description" transition:slide>
-										<p>{part.description}</p>
-									</div>
-								{/if}
+{#snippet renderMesh(part, mesh)}
+	<T.Mesh
+		name={mesh.name}
+		geometry={mesh.geometry}
+		position={[mesh.position.x, mesh.position.y, mesh.position.z]}
+		rotation={[mesh.rotation.x, mesh.rotation.y, mesh.rotation.z]}
+		scale={[mesh.scale.x, mesh.scale.y, mesh.scale.z]}
+		castShadow={true}
+		receiveShadow={true}
+		onpointerenter={(e) => {
+			if (isDragging) {
+				hoveredPartName = null;
+				// $hovering = false;
+				return;
+			}
+			e.stopPropagation();
+			if (!checkName(mesh.name).use().isUse) return;
+			if (config.selectedAsset.part?.name !== part.name) {
+				// onPointerEnter();
+				hoveredPartName = part.name;
+				isHovered = true;
+			}
+		}}
+		onpointerleave={(e) => {
+			e.stopPropagation();
+			// onPointerLeave();
+			hoveredPartName = null;
+			// $hovering = false;
+		}}
+		onclick={(e) => {
+			e.stopPropagation();
+			if (!checkName(mesh.name).use().isUse) return;
+			console.log(part);
+			config.setSelected({
+				modelName: model.name,
+				partName: part.name,
+				partModelName: part.modelName
+			});
+			hoveredPartName = null;
+			// $hovering = false;
+		}}
+		material={new MeshStandardMaterial({
+			color: 'magenta'
+		})}
+	>
+		{#if checkName(mesh.name).use().isUse}
+			<Material
+				material={part?.material}
+				modelName={model.name}
+				setColor={part?.color}
+				aoMap={mesh.material.aoMap}
+				isHovered={hoveredPartName === part?.name}
+			/>
+		{:else}
+			{@const mat = mesh.material}
+			<T.MeshStandardMaterial aoMap={mat.aoMap} aoMapIntensity={2} color={mat.color} />
+		{/if}
+		{#if mesh.children.length > 0}
+			{#each mesh.children as child (child.uuid)}
+				<HTML
+					position={[child.position.x, child.position.y, child.position.z]}
+					occlude
+					pointerEvents="all"
+					onvisibilitychange={(e) => {
+						model.parts[part.name].visible = e;
+					}}
+				>
+					{#if model.parts[part.name].visible}
+						<div class="info">
+							<button onclick={(e) => {}}>X</button>
+							<!-- {#if getSelected()?.part?.name === mesh.name}
+							<div class="description" transition:slide>
+								<p>{part.description}</p>
 							</div>
-						{/if}
-					</HTML>
-				{/each} -->
+						{/if} -->
+						</div>
+					{/if}
+				</HTML>
+			{/each}
+		{/if}
+	</T.Mesh>
+	<T.Group position={[mesh.position.x, mesh.position.y, mesh.position.z]}></T.Group>
+{/snippet}
+
+{#if model}
+	<T.Group scale={scaleTween.current} oncreate={(e) => {}}>
+		{#if $gltf}
+			{#each $gltf.scene.children as mesh, index (mesh.uuid)}
+				{@const socket = checkName(mesh.name).socket()}
+				{#if !socket.isSocket}
+					{@const part = model.parts ? model.parts[mesh.name] : null}
+					{@render renderMesh(part, mesh)}
+				{:else}
+					<T.Group
+						geometry={mesh.geometry}
+						position={[mesh.position.x, mesh.position.y, mesh.position.z]}
+						rotation={[mesh.rotation.x, mesh.rotation.y, mesh.rotation.z]}
+						scale={[mesh.scale.x, mesh.scale.y, mesh.scale.z]}
+					>
+						{#await sockets[socket.name] then gltfSocket}
+							{#each gltfSocket?.scene.children as attachment (attachment.uuid)}
+								{@const part = model.parts ? model.parts[attachment.name] : null}
+								<!-- {@const part = model.sockets[socket.name].attachment.parts[attachment.name]} -->
+								{console.log('XX PART XX', part)}
+								{@render renderMesh(part, attachment)}
+							{/each}
+						{/await}
+					</T.Group>
+				{/if}
+			{/each}
+		{/if}
+	</T.Group>
+{/if}
 
 <style>
 	.info {

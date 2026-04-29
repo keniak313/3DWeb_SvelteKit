@@ -136,17 +136,20 @@
 	shadow.bias={0}
 	color="#ffffff"
 />
-{#each Object.values(models) as model, index (model.id)}
-	<Model {model} {isDragging} />
-{/each}
 
-<!-- <T.Mesh position={[0, 0, 0]} scale={2} rotation.x={-1 * 0.5 * Math.PI}>
+{#if models}
+	{#each Object.values(models) as model, index (model.id)}
+		<Model {model} {isDragging} />
+	{/each}
+{/if}
+
+<T.Mesh position={[0, 0, 0]} scale={2} rotation.x={-1 * 0.5 * Math.PI}>
 	<T.PlaneGeometry />
 	<ShadowMaterial color="black" />
-</T.Mesh> -->
+</T.Mesh>
 
 <!-- <BakeShadows /> -->
-
+<!-- 
 <GLTF
 	url="/3D/BG01.glb"
 	oncreate={(ref) => {
@@ -158,7 +161,7 @@
 			metalness: 0
 		});
 	}}
-/>
+/> -->
 
 <!-- <GLTF
 	url="/3D/Watch01_Test.glb"

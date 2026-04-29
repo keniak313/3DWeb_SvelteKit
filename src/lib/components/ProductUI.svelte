@@ -3,6 +3,7 @@
 	import { getContext } from 'svelte';
 	import Input from './Input.svelte';
 	import { Image } from '@unpic/svelte';
+	import ItemIcon from './ItemIcon.svelte';
 
 	const config = getContext('config');
 
@@ -22,7 +23,8 @@
 				class={selected?.model?.name === model.name && 'selected'}
 				onclick={() => config.setSelected({ modelName: model.name })}
 			>
-				{#if model.icon}
+				<ItemIcon src={model.icon} updatedAt={model.updatedAt} isNew={model.newIcon} />
+				<!-- {#if model.icon}
 					{#if !model.newIcon}
 						<Image src={model.icon + '?v=' + time} alt={model.name} width={50} height={50} />
 					{:else}
@@ -30,7 +32,7 @@
 					{/if}
 				{:else}
 					<div style="width: 50px; height: 50px; background-color: magenta"></div>
-				{/if}
+				{/if} -->
 				{model.displayName}
 			</button>
 		{/each}
@@ -42,31 +44,59 @@
 				<p>{selected?.part.description}</p>
 			</div>
 			<div class="options">
-				{#each selected.part.materials as material (material.id)}
-					<div>
-						<button
-							class={selected?.part?.material?.id === material.id && 'selected'}
-							onclick={(e) => {
-								// setProductMaterial({ part: selected.part, material });
-								config.setAssetMaterial({ materialId: material?.id });
-							}}
-							>{material.name}
-						</button>
-					</div>
-					{#if selected.part.material.id === material.id}
-						{#each selected?.part?.material?.colors as color (color.id)}
+				<div>
+					{#each Object.values(selected.model.sockets) as socket (socket.id)}
+						{console.log($state.snapshot(selected.model))}
+						{#if selected.part.socket === socket.name}
+							<p>{socket.name}</p>
+							{#each socket.attachments as attachment (attachment.id)}
+								<button
+									class={socket?.attachment?.id === attachment.id && 'selected'}
+									onclick={(e) => {
+										config.setSocketAttachment({
+											socket: socket.name,
+											attachmentId: attachment.id
+										});
+									}}
+								>
+									<ItemIcon
+										src={attachment.icon}
+										updatedAt={attachment.updatedAt}
+										isNew={attachment.newIcon}
+									/>
+									<p>{attachment.name}</p>
+								</button>
+							{/each}
+						{/if}
+					{/each}
+				</div>
+				<div>
+					{#each selected.part.materials as material (material.id)}
+						<div>
 							<button
-								class={'color ' + (selected?.part?.color?.id === color.id && 'selected')}
-								style="background-color: {color.color}"
-								onclick={() => {
-									// setProductMaterialColor(color);
-									config.setAssetColor({ colorId: color?.id });
-								}}>X</button
-							>
-						{/each}
-					{/if}
-				{/each}
-				<button onclick={() => config.clearPart()}>CLOSE</button>
+								class={selected?.part?.material?.id === material.id && 'selected'}
+								onclick={(e) => {
+									// setProductMaterial({ part: selected.part, material });
+									config.setAssetMaterial({ materialId: material?.id });
+								}}
+								>{material.name}
+							</button>
+						</div>
+						{#if selected.part.material.id === material.id}
+							{#each selected?.part?.material?.colors as color (color.id)}
+								<button
+									class={'color ' + (selected?.part?.color?.id === color.id && 'selected')}
+									style="background-color: {color.color}"
+									onclick={() => {
+										// setProductMaterialColor(color);
+										config.setAssetColor({ colorId: color?.id });
+									}}>X</button
+								>
+							{/each}
+						{/if}
+					{/each}
+					<button onclick={() => config.clearPart()}>CLOSE</button>
+				</div>
 			</div>
 		</div>
 	{/if}
@@ -131,6 +161,7 @@
 
 	.options {
 		display: flex;
+		flex-direction: column;
 		gap: 1rem;
 		flex-wrap: wrap;
 	}

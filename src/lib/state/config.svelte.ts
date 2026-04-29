@@ -1,34 +1,12 @@
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
 import type { Color, Material, Model, Texture } from '$lib/server/db/schema';
-import { encodeConfig } from '$lib/utilities/helpers';
+import { checkName, encodeConfig } from '$lib/utilities/helpers';
 import type { CameraControlsRef } from '@threlte/extras';
 import { untrack } from 'svelte';
 import { SvelteMap } from 'svelte/reactivity';
 
 import { getContext, setContext } from 'svelte';
-
-const setUrl = (model) => {
-	const curUrl = !page.route.id.includes('(admin)');
-	if (!curUrl) return;
-
-	const parts = [];
-	Object.values(model.parts).forEach((part) => {
-		if (part.name.includes('use')) {
-			parts.push({
-				name: part.name,
-				color: part.color,
-				material: part.material
-			});
-		}
-	});
-	const url = encodeConfig({
-		modelName: model.name,
-		parts: parts
-	});
-
-	goto(`/?item=${url}`);
-};
 
 export const createConfig = (initData: {
 	models: Model[];
@@ -46,8 +24,29 @@ export const createConfig = (initData: {
 
 	const selected = $state({
 		modelName: null,
-		partName: null
+		partName: null,
+		partModelName: null
 	});
+
+	// const models = $derived(
+	// 	initData.models.map((m) => {
+	// 		let parts = m.parts;
+	// 		if (m.sockets) {
+	// 			Object.values(m.sockets).forEach((s) => {
+	// 				console.log('models socket', s);
+	// 				const attachment = initData.models.find((m) => m.id === s.attachment);
+	// 				parts = { ...parts, ...attachment.parts };
+	// 			});
+	// 		}
+
+	// 		return {
+	// 			...m,
+	// 			parts
+	// 		};
+	// 	})
+	// );
+
+	// console.log('NEW MODELSSS', $state.snapshot(models));
 
 	const data = $state({
 		models: initData.models,
@@ -76,21 +75,57 @@ export const createConfig = (initData: {
 				model.name,
 				{
 					...model,
-					parts: Object.fromEntries(
-						Object.values(model.parts).map((part) => [
-							part.name,
-							{
-								...part,
-								material: materialsMap.get(part.material),
-								color: colorsMap.get(part.color),
-								materials: part.materials?.map((mat) => materialsMap.get(mat.id))
-							}
-						])
-					)
+					sockets: Object.fromEntries(
+						Object.values(model.sockets || {}).map((socket) => {
+							return [
+								socket.name,
+								{
+									...socket,
+									attachment: data.models.find((m) => m.id === socket.attachment),
+									attachments: socket.attachments?.map((att) =>
+										data.models.find((m) => m.id === att.id)
+									)
+								}
+							];
+						})
+					),
+					parts: {
+						...Object.fromEntries(
+							Object.values(model.parts).map((part) => [
+								part.name,
+								{
+									...part,
+									material: materialsMap.get(part.material),
+									color: colorsMap.get(part.color),
+									materials: part.materials?.map((mat) => materialsMap.get(mat.id))
+								}
+							])
+						),
+						...Object.fromEntries(
+							Object.values(model.sockets || {}).flatMap((socket) => {
+								const attachedModel = data.models.find((m) => m.id === socket.attachment);
+								if (!attachedModel || !attachedModel.parts) return [];
+
+								// Mapujemy każdą część z doczepionego modelu osobno
+								return Object.values(attachedModel.parts).map((part) => [
+									part.name,
+									{
+										...part,
+										material: materialsMap.get(part.material),
+										color: colorsMap.get(part.color),
+										// Tutaj też warto dodać mapowanie materiałów dla części z socketu
+										materials: part.materials?.map((mat) => materialsMap.get(mat.id))
+									}
+								]);
+							})
+						)
+					}
 				}
 			])
 		);
 	});
+
+	console.log('HYDRATED: ', $state.snapshot(modelsHydrated));
 
 	const resetAzimuthAngle = () => {
 		if (sceneConfig?.controls) {
@@ -101,23 +136,66 @@ export const createConfig = (initData: {
 		}
 	};
 
-	const selectedAsset = $derived({
-		model: modelsHydrated[selected.modelName],
-		part: modelsHydrated[selected.modelName]?.parts[selected.partName]
+	const setUrl = () => {
+		const curUrl = !page.route.id.includes('(admin)');
+		if (!curUrl) return;
+
+		const model = $state.snapshot(modelsHydrated[selected.modelName]);
+
+		const curConfig = {
+			m: model.id,
+			p: Object.values(model.parts).map((part) => {
+				return [part.name.split('_use')[0], part.material?.id, part.color?.id];
+			}),
+			a:
+				model.sockets &&
+				Object.values(model.sockets).map((socket) => ({
+					m: socket.attachment.id,
+					s: socket.name,
+					p: Object.values(socket.attachment.parts).map((part) => {
+						return [part.name.split('_use')[0], part.material, part.color];
+					})
+				}))
+		};
+
+		console.log('MODEL IN SET URL: ', $state.snapshot(model));
+		console.log('CUR CONFIG: ', curConfig);
+
+		const url = encodeConfig(curConfig);
+
+		goto(`/?item=${url}`);
+	};
+
+	const selectedAsset = $derived.by(() => {
+		const model = modelsHydrated[selected.modelName];
+		const part = model?.parts[selected.partName];
+		if (part) {
+			const selectedPart = modelsHydrated[part.modelName].parts[part.name];
+			return {
+				model: model,
+				part: selectedPart
+			};
+		} else {
+			return {
+				model: model,
+				part: part
+			};
+		}
 	});
 
-	function setSelected({ modelName, partName }) {
+	function setSelected({ modelName, partName, partModelName }) {
 		selected.modelName = modelName;
 		selected.partName = partName;
+		selected.partModelName = partModelName;
 
 		if (partName) {
-			const model = data.models.find((m) => m.name === selected.modelName);
+			const model = data.models.find((m) => m.name === selected.partModelName);
 			const part = model.parts[selected.partName];
 
 			resetAzimuthAngle();
 			sceneConfig.controls?.setLookAt(...part.position, ...part.target, true);
 		} else {
-			setUrl(data.models.find((m) => m.name === selected.modelName));
+			setUrl();
 			resetAzimuthAngle();
 			sceneConfig.controls?.setLookAt(
 				...sceneConfig.camera.position,
@@ -128,8 +206,14 @@ export const createConfig = (initData: {
 	}
 
 	function setAssetMaterial({ materialId }) {
-		const model = data.models.find((m) => m.name === selected.modelName);
+		const model = data.models.find((m) => m.name === selected.partModelName);
 		const part = model.parts[selected.partName];
+
+		if (part) {
+			const selectedPart = data.models.find((m) => m.name === part.name);
+			console.log('SELECTED PART: ', $state.snapshot(selectedPart));
+		}
+
 		const material = data.materials.find((m) => m.id === materialId);
 
 		part.material = materialId;
@@ -137,28 +221,70 @@ export const createConfig = (initData: {
 
 		// data.models = [...data.models];
 
-		setUrl(model);
+		setUrl();
 	}
 
 	function setAssetColor({ colorId }) {
-		const model = data.models.find((m) => m.name === selected.modelName);
+		console.log($state.snapshot(selected));
+		const model = data.models.find((m) => m.name === selected.partModelName);
 		const part = model.parts[selected.partName];
 
+		console.log($state.snapshot(model));
+		console.log($state.snapshot(part));
+
 		part.color = colorId;
-		setUrl(model);
+		setUrl();
 	}
 
-	function setAssetFromUrl({ modelName, parts }) {
-		const model = data.models.find((m) => m.name === modelName);
-		parts.forEach((part) => {
-			model.parts[part.name].material = part.material;
-			model.parts[part.name].color = part.color;
+	function setAssetFromUrl(urlConfig) {
+		console.log('CONFIG FROM URL', urlConfig);
+		const model = data.models.find((m) => m.id === urlConfig.m);
+		urlConfig.p.forEach((part) => {
+			const partName = `${part[0]}_use`;
+			const curPart = model?.parts[partName];
+			if (curPart) {
+				curPart.material = part[1];
+				curPart.color = part[2];
+			}
 		});
-		selected.modelName = modelName;
+
+		urlConfig.a.forEach((att) => {
+			const attModel = data.models.find((m) => m.id === att.m);
+			model.sockets[att.s].attachment = att.m;
+			att.p.forEach((part) => {
+				const partName = `${part[0]}_use`;
+				const curPart = attModel?.parts[partName];
+				if (curPart) {
+					curPart.material = part[1];
+					curPart.color = part[2];
+				}
+			});
+		});
+
+		// parts.forEach((part) => {
+		// 	model.parts[part.name].material = part.material;
+		// 	model.parts[part.name].color = part.color;
+		// });
+		selected.modelName = model.name;
+	}
+
+	function setSocketAttachment({ socket, attachmentId }) {
+		const model = data.models.find((m) => m.name === selected.modelName);
+		// console.log(model.sockets[socket].attachment);
+		model.sockets[socket].attachment = attachmentId;
+
+		const attachment = data.models.find((m) => m.id === attachmentId);
+		console.log('ATTACHMENT: ', $state.snapshot(attachment));
+		console.log('MODEL: ', $state.snapshot(data.models.find((m) => m.name == selected.modelName)));
+		selected.partName = Object.values(attachment.parts)[0].name;
+		selected.partModelName = Object.values(attachment.parts)[0].modelName;
+
+		setUrl();
 	}
 
 	function clearPart() {
 		selected.partName = null;
+		selected.partModelName = null;
 
 		sceneConfig.controls?.setLookAt(
 			...sceneConfig.camera.position,
@@ -232,6 +358,7 @@ export const createConfig = (initData: {
 		setSelected,
 		setAssetMaterial,
 		setAssetColor,
+		setSocketAttachment,
 		setPosTargetFromCamera,
 		clearPart,
 		clearSelection,

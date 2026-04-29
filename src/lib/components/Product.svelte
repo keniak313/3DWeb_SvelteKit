@@ -22,7 +22,9 @@
 	onMount(() => {
 		if (urlItem) {
 			const decoded = decodeConfig(urlItem);
-			config?.setAssetFromUrl({ modelName: decoded.modelName, parts: decoded.parts });
+			if (decoded) {
+				config?.setAssetFromUrl(decoded);
+			}
 		}
 	});
 </script>

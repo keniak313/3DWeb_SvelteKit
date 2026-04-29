@@ -4,13 +4,28 @@ import { model } from '../db/schema';
 import { put } from '@vercel/blob';
 
 export async function updateModels({ formData, locals }) {
+	console.log(formData);
 	const modelIds = formData.getAll('model-id');
 	const partsIds = formData.getAll('part-id');
+	const socketIds = formData.getAll('socket-id');
 
 	const newParts = {};
+	const newSockets = {};
 
 	modelIds.forEach((id) => {
 		newParts[id] = {};
+	});
+
+	socketIds.forEach((id) => {
+		newSockets[formData.get(`socket-model-id-${id}`)] = {
+			...newSockets[formData.get(`socket-model-id-${id}`)],
+			[formData.get(`socket-name-${id}`)]: {
+				id: id,
+				name: formData.get(`socket-name-${id}`),
+				attachment: formData.get(`socket-attachment-${id}`),
+				attachments: JSON.parse(formData.getAll(`socket-attachments-${id}`))
+			}
+		};
 	});
 
 	partsIds.forEach((id) => {
@@ -19,11 +34,14 @@ export async function updateModels({ formData, locals }) {
 			[formData.get(`part-name-${id}`)]: {
 				id: id,
 				name: formData.get(`part-name-${id}`),
+				modelName: formData.get(`part-model-name-${id}`),
 				displayName: formData.get(`part-displayName-${id}`),
 				description: formData.get(`part-description-${id}`),
 				materials: JSON.parse(formData.getAll(`part-materials-${id}`)),
 				material: formData.get(`part-material-${id}`),
 				color: formData.get(`part-color-${id}`),
+				isAttachment: formData.get(`part-isAttachment-${id}`) === 'true' ? true : false,
+				socket: formData.get(`part-socket-${id}`) || null,
 				position: [
 					Number(formData.get(`part-position-x-${id}`)),
 					Number(formData.get(`part-position-y-${id}`)),
@@ -80,6 +98,9 @@ export async function updateModels({ formData, locals }) {
 					? null
 					: formData.get(`model-icon-${modelId}`),
 			parts: newParts[modelId],
+			sockets: newSockets[modelId],
+			isAttachment: formData.get(`model-isAttachment-${modelId}`) === 'true' ? true : false,
+			socket: formData.get(`model-socket-${modelId}`) || null,
 			updatedAt: new Date().toISOString()
 		});
 	}

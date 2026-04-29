@@ -58,6 +58,9 @@ export const model = sqliteTable('model', {
 			materials: string[];
 		}[]
 	>(),
+	isAttachment: int('is_attachment', { mode: 'boolean' }).default(false),
+	socket: text('socket'),
+	sockets: text('sockets', { mode: 'json' }),
 	createdAt: text('created_at', { mode: 'text' })
 		.notNull()
 		.default(sql`CURRENT_TIMESTAMP`),
