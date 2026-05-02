@@ -1,21 +1,19 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
 	import ColorsForm from '$lib/components/admin/ColorsForm.svelte';
 	import MaterialsForm from '$lib/components/admin/MaterialsForm.svelte';
 	import ModelForm from '$lib/components/admin/ModelForm.svelte';
-	import NewModelForm from '$lib/components/admin/NewModelForm.svelte';
-	import SceneForm from '$lib/components/admin/SceneForm.svelte';
-	import TextureForm from '$lib/components/admin/TextureForm.svelte';
 	import CdnCheck from '$lib/components/CdnCheck.svelte';
-	import InputSelect from '$lib/components/InputSelect.svelte';
+	import Library from '$lib/components/Library.svelte';
 	import Loader from '$lib/components/Loader.svelte';
 	import Product from '$lib/components/Product.svelte';
-	import { getContext } from 'svelte';
-	import { cubicOut } from 'svelte/easing';
-	import { Tween } from 'svelte/motion';
-	import { fade } from 'svelte/transition';
+	import { getAppConfig } from '$lib/state/config.svelte.js';
 
-	const config = getContext('config');
+	let { data } = $props();
+
+	const config = getAppConfig();
+
+	const models = $derived(config.data.models);
+	const textures = $derived(config.data.textures);
 
 	let selectedMenu = $state();
 
@@ -52,25 +50,34 @@
 </script>
 
 <div class="wrapper">
-	{#if isUploading}
-		<Loader {progress} isServer={true} isShown={isUploading} />
-	{/if}
-	<CdnCheck>
-		<Product />
-	</CdnCheck>
-	<div class="forms">
+	<div class="left">
+		<CdnCheck>
+			<Product />
+		</CdnCheck>
+		<Library />
+	</div>
+
+	<div class="right">
 		<div class="nav">
-			<button onclick={() => (selectedMenu = 'scene')}>Scene</button>
+			{#if data.session.user.role === 'admin'}
+				<button onclick={() => (selectedMenu = 'scene')}>Scene</button>
+			{/if}
 			<button onclick={() => (selectedMenu = 'colors')}>Colors</button>
 			<button onclick={() => (selectedMenu = 'materials')}>Materials</button>
 			<!-- <button onclick={() => (selectedMenu = 'textures')}>Textures</button> -->
 			<button onclick={() => (selectedMenu = 'models')}>Models</button>
 			<!-- <button onclick={() => (selectedMenu = 'upload')}>Upload</button> -->
-			<form method="POST" action="?/logout" use:enhance>
-				<button>WYLOGUJ</button>
-			</form>
 		</div>
-		<form
+		<div class={selectedMenu === 'colors' ? '' : 'hidden'}>
+			<ColorsForm />
+		</div>
+		<div class={selectedMenu === 'materials' ? '' : 'hidden'}>
+			<MaterialsForm />
+		</div>
+		<div class={selectedMenu === 'models' ? '' : 'hidden'}>
+			<ModelForm />
+		</div>
+		<!-- <form
 			method="POST"
 			action="?/saveSettings"
 			enctype="multipart/form-data"
@@ -110,41 +117,18 @@
 					isUploading = false;
 					console.log(err);
 				}
-
-				// return async ({ update, result }) => {
-				// 	await update();
-				// 	isUploading = false;
-				// 	console.log(result);
-				// 	config.updateData(result.data);
-				// };
 			}}
 		>
-			<button type="submit">Save Settings</button>
 			<div class={selectedMenu === 'scene' ? '' : 'hidden'}>
 				<SceneForm />
 			</div>
 			<div class={selectedMenu === 'colors' ? '' : 'hidden'}>
 				<ColorsForm />
 			</div>
-			<div class={selectedMenu === 'materials' ? '' : 'hidden'}>
-				<MaterialsForm />
-			</div>
+	
 
-			<div class={selectedMenu === 'models' ? '' : 'hidden'}>
-				<ModelForm />
-			</div>
-			<!-- <div class={selectedMenu === 'upload' ? '' : 'hidden'}>
-				<NewModelForm models={config.models} />
-			</div> -->
-		</form>
 
-		<!-- {#if selectedMenu === 'models'}
-			<NewModelForm models={config.models} />
-		{/if} -->
-
-		<!-- {#if selectedMenu === 'textures'}
-			<TextureForm textures={config.textures} />
-		{/if} -->
+		</form> -->
 	</div>
 </div>
 
@@ -160,9 +144,8 @@
 		width: 100%;
 		gap: 0.2rem;
 	}
-	.forms {
+	.right {
 		position: relative;
-		width: 400px;
 		height: 100vh;
 		top: 0;
 		right: 0;
@@ -171,6 +154,13 @@
 		gap: 1rem;
 		overflow-y: auto;
 		background-color: white;
+		flex: 0.25;
+	}
+
+	.left {
+		display: flex;
+		flex-direction: column;
+		flex: 1;
 	}
 
 	.hidden {

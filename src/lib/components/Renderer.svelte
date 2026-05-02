@@ -53,7 +53,7 @@
 				}),
 				new VignetteEffect({
 					eskil: false,
-					darkness: 0.4,
+					darkness: 0.2,
 					offset: 0.3
 				})
 			)

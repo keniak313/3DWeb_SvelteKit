@@ -10,7 +10,7 @@
 	import { getAppConfig, type AppConfig } from '$lib/state/config.svelte';
 	import { checkName } from '$lib/utilities/helpers';
 	import { get, writable } from 'svelte/store';
-	import { fade } from 'svelte/transition';
+	import { fade, slide } from 'svelte/transition';
 
 	const { renderer, camera } = useThrelte();
 
@@ -25,20 +25,16 @@
 
 		if (model.sockets) {
 			Object.values(model.sockets).forEach((m) => {
-				console.log('SOCKET', m);
 				if (!m.attachment) return;
 				const gltf = getLoadedAssets().models?.[m.attachment.name];
-				console.log(gltf);
 				attachments = { ...attachments, [m.name]: gltf };
 			});
-			console.log(attachments);
 			return attachments;
 		}
 		return null;
 	});
 
-	let isHovered = $state(false);
-	useCursor(isHovered ? 'pointer' : 'default');
+	let { onPointerEnter, onPointerLeave } = useCursor('pointer');
 
 	let hoveredPartName = $state();
 
@@ -65,6 +61,10 @@
 			lastModelName = null;
 		}
 	});
+
+	let partsVisible = $state(
+		model.parts ? Object.fromEntries(Object.values(model.parts).map((p) => [p.name, true])) : []
+	);
 </script>
 
 {#snippet renderMesh(part, mesh)}
@@ -85,16 +85,14 @@
 			e.stopPropagation();
 			if (!checkName(mesh.name).use().isUse) return;
 			if (config.selectedAsset.part?.name !== part.name) {
-				// onPointerEnter();
+				onPointerEnter();
 				hoveredPartName = part.name;
-				isHovered = true;
 			}
 		}}
 		onpointerleave={(e) => {
 			e.stopPropagation();
-			// onPointerLeave();
+			onPointerLeave();
 			hoveredPartName = null;
-			// $hovering = false;
 		}}
 		onclick={(e) => {
 			e.stopPropagation();
@@ -105,6 +103,7 @@
 				partName: part.name,
 				partModelName: part.modelName
 			});
+			onPointerLeave();
 			hoveredPartName = null;
 			// $hovering = false;
 		}}
@@ -131,17 +130,17 @@
 					occlude
 					pointerEvents="all"
 					onvisibilitychange={(e) => {
-						model.parts[part.name].visible = e;
+						partsVisible[part.name] = e;
 					}}
 				>
-					{#if model.parts[part.name].visible}
-						<div class="info">
-							<button onclick={(e) => {}}>X</button>
-							<!-- {#if getSelected()?.part?.name === mesh.name}
-							<div class="description" transition:slide>
-								<p>{part.description}</p>
-							</div>
-						{/if} -->
+					{#if partsVisible[part.name]}
+						<div class="info" transition:fade>
+							<button onclick={(e) => {}}></button>
+							{#if config.selected.partName === mesh.name}
+								<div class="description" transition:slide>
+									<p>{part.description}</p>
+								</div>
+							{/if}
 						</div>
 					{/if}
 				</HTML>
@@ -170,7 +169,6 @@
 							{#each gltfSocket?.scene.children as attachment (attachment.uuid)}
 								{@const part = model.parts ? model.parts[attachment.name] : null}
 								<!-- {@const part = model.sockets[socket.name].attachment.parts[attachment.name]} -->
-								{console.log('XX PART XX', part)}
 								{@render renderMesh(part, attachment)}
 							{/each}
 						{/await}

@@ -7,6 +7,7 @@ import { untrack } from 'svelte';
 import { SvelteMap } from 'svelte/reactivity';
 
 import { getContext, setContext } from 'svelte';
+import { Vector3 } from 'three';
 
 export const createConfig = (initData: {
 	models: Model[];
@@ -28,26 +29,6 @@ export const createConfig = (initData: {
 		partModelName: null
 	});
 
-	// const models = $derived(
-	// 	initData.models.map((m) => {
-	// 		let parts = m.parts;
-	// 		if (m.sockets) {
-	// 			Object.values(m.sockets).forEach((s) => {
-	// 				console.log('models socket', s);
-	// 				const attachment = initData.models.find((m) => m.id === s.attachment);
-	// 				parts = { ...parts, ...attachment.parts };
-	// 			});
-	// 		}
-
-	// 		return {
-	// 			...m,
-	// 			parts
-	// 		};
-	// 	})
-	// );
-
-	// console.log('NEW MODELSSS', $state.snapshot(models));
-
 	const data = $state({
 		models: initData.models,
 		colors: initData.colors,
@@ -55,10 +36,10 @@ export const createConfig = (initData: {
 		textures: initData.textures
 	});
 
-	const modelsHydrated = $derived.by(() => {
-		const colorsMap = new SvelteMap(data.colors.map((c) => [c.id, c]));
-
-		const materialsMap = new SvelteMap(
+	const modelsMap = $derived(new SvelteMap(data.models.map((m) => [m.id, m])));
+	const colorsMap = $derived(new SvelteMap(data.colors.map((c) => [c.id, c])));
+	const materialsMap = $derived(
+		new SvelteMap(
 			data.materials.map((mat) => {
 				const hydratedMat = {
 					...mat,
@@ -68,10 +49,32 @@ export const createConfig = (initData: {
 				};
 				return [mat.id, hydratedMat];
 			})
-		);
+		)
+	);
 
+	const modelsWithAttachments = $derived.by(() => {
+		return data.models.map((m) => {
+			let parts = m.parts;
+			if (m.sockets) {
+				Object.values(m.sockets).forEach((s) => {
+					// console.log('models socket', s);
+					const attachment = modelsMap.get(s.attachment);
+					if (attachment && attachment.parts) {
+						parts = { ...parts, ...attachment.parts };
+					}
+				});
+			}
+
+			return {
+				...m,
+				parts
+			};
+		});
+	});
+
+	const modelsHydrated = $derived.by(() => {
 		return Object.fromEntries(
-			data.models.map((model) => [
+			modelsWithAttachments.map((model) => [
 				model.name,
 				{
 					...model,
@@ -81,10 +84,8 @@ export const createConfig = (initData: {
 								socket.name,
 								{
 									...socket,
-									attachment: data.models.find((m) => m.id === socket.attachment),
-									attachments: socket.attachments?.map((att) =>
-										data.models.find((m) => m.id === att.id)
-									)
+									attachment: modelsMap.get(socket.attachment),
+									attachments: socket.attachments?.map((att) => modelsMap.get(att.id))
 								}
 							];
 						})
@@ -100,25 +101,25 @@ export const createConfig = (initData: {
 									materials: part.materials?.map((mat) => materialsMap.get(mat.id))
 								}
 							])
-						),
-						...Object.fromEntries(
-							Object.values(model.sockets || {}).flatMap((socket) => {
-								const attachedModel = data.models.find((m) => m.id === socket.attachment);
-								if (!attachedModel || !attachedModel.parts) return [];
-
-								// Mapujemy każdą część z doczepionego modelu osobno
-								return Object.values(attachedModel.parts).map((part) => [
-									part.name,
-									{
-										...part,
-										material: materialsMap.get(part.material),
-										color: colorsMap.get(part.color),
-										// Tutaj też warto dodać mapowanie materiałów dla części z socketu
-										materials: part.materials?.map((mat) => materialsMap.get(mat.id))
-									}
-								]);
-							})
 						)
+						// ...Object.fromEntries(
+						// 	Object.values(model.sockets || {}).flatMap((socket) => {
+						// 		const attachedModel = data.models.find((m) => m.id === socket.attachment);
+						// 		if (!attachedModel || !attachedModel.parts) return [];
+
+						// 		// Mapujemy każdą część z doczepionego modelu osobno
+						// 		return Object.values(attachedModel.parts).map((part) => [
+						// 			part.name,
+						// 			{
+						// 				...part,
+						// 				material: materialsMap.get(part.material),
+						// 				color: colorsMap.get(part.color),
+						// 				// Tutaj też warto dodać mapowanie materiałów dla części z socketu
+						// 				materials: part.materials?.map((mat) => materialsMap.get(mat.id))
+						// 			}
+						// 		]);
+						// 	})
+						// )
 					}
 				}
 			])
@@ -128,19 +129,26 @@ export const createConfig = (initData: {
 	console.log('HYDRATED: ', $state.snapshot(modelsHydrated));
 
 	const resetAzimuthAngle = () => {
-		if (sceneConfig?.controls) {
-			const currentAzimuth = sceneConfig.controls.azimuthAngle;
-			const normalizedAzimuth = currentAzimuth % (Math.PI * 2);
+		const controls = sceneConfig?.controls;
+		if (!controls) return;
 
-			sceneConfig.controls.azimuthAngle = normalizedAzimuth;
-		}
+		// const currentAzimuth = controls.azimuthAngle;
+		// const normalizedAzimuth = currentAzimuth % (Math.PI * 2);
+
+		const position = new Vector3();
+		const target = new Vector3();
+
+		controls.getPosition(position);
+		controls.getTarget(target);
+
+		controls.setLookAt(position.x, position.y, position.z, target.x, target.y, target.z, false);
 	};
 
 	const setUrl = () => {
 		const curUrl = !page.route.id.includes('(admin)');
 		if (!curUrl) return;
 
-		const model = $state.snapshot(modelsHydrated[selected.modelName]);
+		const model = modelsHydrated[selected.modelName];
 
 		const curConfig = {
 			m: model.id,
@@ -192,10 +200,26 @@ export const createConfig = (initData: {
 			const model = data.models.find((m) => m.name === selected.partModelName);
 			const part = model.parts[selected.partName];
 
+			let position = [0, 0, 0];
+			let target = [0, 0, 0];
+
+			if (model?.isAttachment) {
+				const attModel = data.models.find((m) => m.name === selected.modelName);
+				if (!attModel.sockets) return;
+
+				const socket = attModel.sockets[model.socket];
+				console.log('SOCKET: ', socket);
+				position = socket.position;
+				target = socket.target;
+			} else {
+				position = part.position;
+				target = part.target;
+			}
+
 			resetAzimuthAngle();
-			sceneConfig.controls?.setLookAt(...part.position, ...part.target, true);
+			sceneConfig.controls?.setLookAt(...position, ...target, true);
 		} else {
-			setUrl();
+			// setUrl();
 			resetAzimuthAngle();
 			sceneConfig.controls?.setLookAt(
 				...sceneConfig.camera.position,
@@ -221,7 +245,7 @@ export const createConfig = (initData: {
 
 		// data.models = [...data.models];
 
-		setUrl();
+		// setUrl();
 	}
 
 	function setAssetColor({ colorId }) {
@@ -233,7 +257,21 @@ export const createConfig = (initData: {
 		console.log($state.snapshot(part));
 
 		part.color = colorId;
-		setUrl();
+		// setUrl();
+	}
+
+	function setSocketAttachment({ socket, attachmentId }) {
+		const model = data.models.find((m) => m.name === selected.modelName);
+		// console.log(model.sockets[socket].attachment);
+		model.sockets[socket].attachment = attachmentId;
+
+		const attachment = data.models.find((m) => m.id === attachmentId);
+		// console.log('ATTACHMENT: ', $state.snapshot(attachment));
+		// console.log('MODEL: ', $state.snapshot(data.models.find((m) => m.name == selected.modelName)));
+		selected.partName = Object.values(attachment.parts)[0].name;
+		selected.partModelName = Object.values(attachment.parts)[0].modelName;
+
+		// setUrl();
 	}
 
 	function setAssetFromUrl(urlConfig) {
@@ -268,20 +306,6 @@ export const createConfig = (initData: {
 		selected.modelName = model.name;
 	}
 
-	function setSocketAttachment({ socket, attachmentId }) {
-		const model = data.models.find((m) => m.name === selected.modelName);
-		// console.log(model.sockets[socket].attachment);
-		model.sockets[socket].attachment = attachmentId;
-
-		const attachment = data.models.find((m) => m.id === attachmentId);
-		console.log('ATTACHMENT: ', $state.snapshot(attachment));
-		console.log('MODEL: ', $state.snapshot(data.models.find((m) => m.name == selected.modelName)));
-		selected.partName = Object.values(attachment.parts)[0].name;
-		selected.partModelName = Object.values(attachment.parts)[0].modelName;
-
-		setUrl();
-	}
-
 	function clearPart() {
 		selected.partName = null;
 		selected.partModelName = null;
@@ -305,14 +329,31 @@ export const createConfig = (initData: {
 		);
 	}
 
-	function setPosTargetFromCamera({ partName }) {
+	function setPosTargetFromCamera({ partName = null, socketName = null }) {
 		const position = sceneConfig.controls?.getPosition();
 		const target = sceneConfig.controls?.getTarget();
 		console.log(position);
 		console.log(target);
 
+		if (!partName && !socketName) return;
+
+		const model = data.models.find((m) => m.name === selected.modelName);
+
+		if (socketName) {
+			const socket = model.sockets[socketName];
+			socket.target = [
+				Number(target.x.toFixed(2)),
+				Number(target.y.toFixed(2)),
+				Number(target.z.toFixed(2))
+			];
+			socket.position = [
+				Number(position.x.toFixed(2)),
+				Number(position.y.toFixed(2)),
+				Number(position.z.toFixed(2))
+			];
+		}
+
 		if (partName) {
-			const model = data.models.find((m) => m.name === selected.modelName);
 			const part = model.parts[partName];
 			part.position = [
 				Number(position.x.toFixed(2)),

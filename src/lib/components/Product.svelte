@@ -11,12 +11,15 @@
 	import { getContext, onMount } from 'svelte';
 	import { decodeConfig } from '$lib/utilities/helpers';
 	import { getLoadedAssets } from './AssetPreloader.svelte';
+	import Renderer from './Renderer.svelte';
+	import { getAppConfig } from '$lib/state/config.svelte';
+	import ProductCanvas from './ProductCanvas.svelte';
 
 	let isStudio = $state(false);
 
 	const { progress } = useProgress();
 
-	const config = getContext('config');
+	const config = getAppConfig();
 
 	const urlItem = $derived(page.url.searchParams.get('item'));
 	onMount(() => {
@@ -34,7 +37,9 @@
 	<div class="canvas-wrapper" in:fade>
 		<ProductUI />
 
-		<Canvas
+		<ProductCanvas />
+
+		<!-- <Canvas
 			shadows={PCFShadowMap}
 			createRenderer={(canvas) => {
 				return new WebGLRenderer({
@@ -43,7 +48,7 @@
 				});
 			}}
 		>
-			<!-- <Renderer config={postProcessConfig} /> -->
+			<Renderer config={config.sceneConfig} />
 			<Suspense>
 				{#if isStudio}
 					<Studio>
@@ -53,7 +58,7 @@
 					<Scene />
 				{/if}
 			</Suspense>
-		</Canvas>
+		</Canvas> -->
 	</div>
 </section>
 
@@ -64,8 +69,8 @@
 	.canvas-wrapper {
 		position: relative;
 		display: flex;
-		/* width: 100%; */
-		height: 100dvh;
+		width: 100%;
+		height: 70dvh;
 		background-color: white;
 	}
 </style>

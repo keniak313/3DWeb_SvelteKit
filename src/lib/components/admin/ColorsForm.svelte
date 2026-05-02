@@ -2,10 +2,31 @@
 	import { nanoid } from '$lib/utilities/helpers';
 	import { getContext } from 'svelte';
 	import Input from '../Input.svelte';
+	import { enhance } from '$app/forms';
+	import { getAppConfig } from '$lib/state/config.svelte';
 
-	const config = getContext('config');
+	const config = getAppConfig();
 
 	const colors = $derived(config.data.colors);
+
+	let formEl;
+	let timeout;
+	let isInitial = true;
+
+	$effect(() => {
+		const rawData = $state.snapshot(colors);
+		if (isInitial) {
+			isInitial = false;
+			return;
+		}
+
+		// if (!rawData) return;
+
+		clearTimeout(timeout);
+		timeout = setTimeout(() => {
+			formEl?.requestSubmit();
+		}, 2000);
+	});
 </script>
 
 {#snippet renderColor(color)}
@@ -52,7 +73,20 @@
 	</div>
 {/snippet}
 
-<div class="wrapper">
+<form
+	method="POST"
+	action="?/saveColors"
+	bind:this={formEl}
+	use:enhance={({ formData }) => {
+		console.log('ZAPISYWANIE');
+		return async ({ update, result }) => {
+			// await update({ reset: false });
+			if (result.type === 'success') {
+				console.log('ZAPISANO');
+			}
+		};
+	}}
+>
 	<h2>Colors</h2>
 	<hr />
 	<div class="colors">
@@ -78,12 +112,12 @@
 				id: nanoid(5),
 				color: '#ffffff',
 				displayName: '',
-				name: 'new-color',
+				name: `new-color-${colors.length + 1}`,
 				createdAt: new Date().toISOString(),
 				deletedAt: null
 			})}>Add Color</button
 	>
-</div>
+</form>
 
 <style>
 	.colors {

@@ -17,20 +17,43 @@
 	const selectedMat = $state({ id: null });
 
 	let texturesToDelete = $state([]);
+
+	let formEl;
+	let timeout;
+	let isInitial = true;
+
+	$effect(() => {
+		const rawData = $state.snapshot(materials);
+		if (isInitial) {
+			isInitial = false;
+			return;
+		}
+
+		// if (!rawData) return;
+
+		clearTimeout(timeout);
+		timeout = setTimeout(() => {
+			formEl?.requestSubmit();
+		}, 2000);
+	});
 </script>
 
-<div>
+<form
+	method="POST"
+	action="?/saveMaterials"
+	bind:this={formEl}
+	use:enhance={({ formData }) => {
+		console.log('ZAPISYWANIE');
+		return async ({ update, result }) => {
+			// await update({ reset: false });
+			if (result.type === 'success') {
+				console.log('ZAPISANO');
+			}
+		};
+	}}
+>
 	<h2>Materials</h2>
 	<hr />
-	<!-- <form
-		method="POST"
-		action="?/updateMaterials"
-		use:enhance={() => {
-			return async ({ update }) => {
-				await update({ reset: false });
-			};
-		}}
-	> -->
 	<div class="materials">
 		{#each materials as material (material.id)}
 			{#if material.name !== 'default'}
@@ -42,7 +65,7 @@
 						} else {
 							selectedMat.id = material.id;
 						}
-					}}>{material.name}</button
+					}}>{material.displayName || 'No Name'}</button
 				>
 			{/if}
 			<div class={'material' + (selectedMat.id === material.id ? '' : ' hidden')}>
@@ -91,22 +114,6 @@
 					max="1"
 					bind:value={material.opacity}
 				/>
-				<!-- <Input
-					id={'material-color-' + material.id}
-					title="Default Color"
-					type="select"
-					data={material.colors.map((color) => {
-						return colors.find((c) => c.id === color);
-					})}
-					bind:value={material.color}
-				/>
-				<Input
-					id={'material-colors-' + material.id}
-					title="Available Colors"
-					type="select-multiple"
-					data={colors}
-					bind:value={material.colors}
-				/> -->
 				<InputSelect
 					id={'material-colors-' + material.id}
 					title="Available Colors"
@@ -142,22 +149,22 @@
 				</div>
 			</div>
 		{/each}
-		{#each textures as texture (texture.id)}
+		<!-- {#each textures as texture (texture.id)}
 			{#if texture?.isNew}
 				<div class="texture">
 					<Image src={texture.url} alt={texture.name} width={50} height={50} />
 					<p>{texture.name}</p>
 				</div>
 			{/if}
-		{/each}
+		{/each} -->
 	</div>
 	<button
 		type="button"
 		onclick={(e) => {
 			materials.push({
 				id: nanoid(5),
-				name: '',
-				displayName: '',
+				name: `new_material_${materials.length + 1}`,
+				displayName: `NEW MATERIAL ${materials.length + 1}`,
 				description: '',
 				metalness: 0,
 				roughness: 0.5,
@@ -169,10 +176,8 @@
 			});
 		}}>Add Material</button
 	>
-	<!-- <button type="submit">Save Materials</button>
-	</form> -->
 
-	<Input
+	<!-- <Input
 		id="texture"
 		title="ADD TEXTURES"
 		type="file"
@@ -217,8 +222,8 @@
 				}}>Remove</button
 			>
 		</div>
-	{/each}
-</div>
+	{/each} -->
+</form>
 
 <style>
 	.materials {

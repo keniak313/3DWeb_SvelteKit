@@ -117,15 +117,9 @@
 	};
 
 	loadHDR();
-	// loadModels(models);
-	// loadTextures(textures);
 
 	$effect(() => {
-		// loadModels(models);
-		// loadTextures(textures);
-		// const currentModels = models;
-		// const currentTextures = textures;
-
+		console.count('asset preloader effect called');
 		const modelUrls = models.map((m) => m.url).join(',');
 		const textureUrls = textures.map((t) => t.url).join(',');
 

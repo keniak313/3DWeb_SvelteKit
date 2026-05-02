@@ -23,7 +23,17 @@ export async function updateModels({ formData, locals }) {
 				id: id,
 				name: formData.get(`socket-name-${id}`),
 				attachment: formData.get(`socket-attachment-${id}`),
-				attachments: JSON.parse(formData.getAll(`socket-attachments-${id}`))
+				attachments: JSON.parse(formData.getAll(`socket-attachments-${id}`)),
+				position: [
+					Number(formData.get(`socket-position-x-${id}`)),
+					Number(formData.get(`socket-position-y-${id}`)),
+					Number(formData.get(`socket-position-z-${id}`))
+				],
+				target: [
+					Number(formData.get(`socket-target-x-${id}`)),
+					Number(formData.get(`socket-target-y-${id}`)),
+					Number(formData.get(`socket-target-z-${id}`))
+				]
 			}
 		};
 	});

@@ -43,7 +43,6 @@
 	import { scale } from '$lib/transitions';
 	import { getContext, setContext, untrack } from 'svelte';
 	import { page } from '$app/state';
-	import { Spring } from 'svelte/motion';
 
 	let isAdmin = $derived(page.route.id?.includes('(admin)'));
 
@@ -59,21 +58,23 @@
 
 	let isDragging = $state(false);
 
+	let isStudioPage = $derived(page.route.id?.includes('studio'));
+
 	interactivity();
 	transitions();
 </script>
 
 <AssetPreloader />
 
-<EffectComposer multisampling={8} bind:ref={composer}>
-	<!-- <DepthOfFieldEffect
+<!-- <EffectComposer multisampling={8} bind:ref={composer}> -->
+<!-- <DepthOfFieldEffect
 		focusDistance={config.dof.focusDistance}
 		focalLength={config.dof.focalLength}
 		bokehScale={config.dof.bokehScale}
 		focusRange={config.dof.focusRange}
 		resolutionScale={1}
 	/> -->
-	<BloomEffect
+<!-- <BloomEffect
 		luminanceThreshold={config.sceneConfig.bloom.luminanceThreshold}
 		luminanceSmoothing={config.sceneConfig.bloom.luminanceSmoothing}
 		radius={config.sceneConfig.bloom.radius}
@@ -82,8 +83,8 @@
 		resolutionScale={1}
 	/>
 	<ToneMappingEffect mode={ToneMappingMode.ACES_FILMIC} />
-	<VignetteEffect offset={0.3} eskil={false} darkness={0.2} />
-</EffectComposer>
+	<VignetteEffect offset={0.3} eskil={false} darkness={0.2} /> -->
+<!-- </EffectComposer> -->
 
 <Environment texture={getHDRI()} isBackground={false} />
 
@@ -103,8 +104,8 @@
 		minPolarAngle={Math.PI / 5}
 		polarAngle={Math.PI / 2.4}
 		azimuthAngle={Math.PI / 5}
-		dollySpeed={isAdmin ? 1 : 0}
-		truckSpeed={isAdmin ? 1 : 0}
+		dollySpeed={isStudioPage ? 1 : 0}
+		truckSpeed={isStudioPage ? 1 : 0}
 		oncontrolstart={() => {
 			isDragging = true;
 		}}
@@ -137,11 +138,9 @@
 	color="#ffffff"
 />
 
-{#if models}
-	{#each Object.values(models) as model, index (model.id)}
-		<Model {model} {isDragging} />
-	{/each}
-{/if}
+{#each Object.values(models) as model, index (model.id)}
+	<Model {model} {isDragging} />
+{/each}
 
 <T.Mesh position={[0, 0, 0]} scale={2} rotation.x={-1 * 0.5 * Math.PI}>
 	<T.PlaneGeometry />
@@ -149,19 +148,18 @@
 </T.Mesh>
 
 <!-- <BakeShadows /> -->
-<!-- 
+
 <GLTF
 	url="/3D/BG01.glb"
 	oncreate={(ref) => {
 		ref.children[0].castShadow = false;
 		ref.children[0].receiveShadow = true;
-		ref.children[0].material = new MeshStandardMaterial({
+		ref.children[0].material = new MeshBasicMaterial({
 			color: 'white',
-			roughness: 1,
-			metalness: 0
+			toneMapped: false
 		});
 	}}
-/> -->
+/>
 
 <!-- <GLTF
 	url="/3D/Watch01_Test.glb"

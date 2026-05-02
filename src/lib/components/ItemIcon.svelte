@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { Image } from '@unpic/svelte';
+	import { transform } from 'unpic/providers/vercel';
 
-	let { src, isNew = false, updatedAt, width = 50, height = 50 } = $props();
+	let { src, isNew = false, updatedAt, size = 50 } = $props();
 
 	let srcDate = $derived.by(() => {
 		if (!src) return null;
@@ -11,7 +12,13 @@
 </script>
 
 {#if srcDate}
-	<Image src={srcDate} {width} {height} />
+	<Image
+		src={srcDate}
+		width={size}
+		height={size}
+		transformer={transform}
+		options={{ vercel: { force: true, prefix: '_vercel' } }}
+	/>
 {:else}
-	<div style={`width: ${width}px; height: ${height}px; background-color: magenta`}></div>
+	<div style={`width: ${size}px; height: ${size}px; background-color: magenta`}></div>
 {/if}

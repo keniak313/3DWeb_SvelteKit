@@ -1,22 +1,41 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import favicon from '$lib/assets/favicon.svg';
-	import { createConfig } from '$lib/state/config.svelte.js';
-	import { setContext, untrack } from 'svelte';
+	import { signIn, signOut } from '$lib/auth-client';
 
 	let { children, data } = $props();
 
-	const config = createConfig(data);
-
-	setContext('config', config);
+	const username = $derived(data.session.user.username);
 </script>
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
+<!-- <header>
+	<div class="nav">
+		{#if data.session}
+			<p>Logged in as: {data.session.user.username}</p>
+			<a href="/{username}"> Main user page </a>
+			<a href="/{username}/me/studio"> Studio </a>
+			<button onclick={signOut}>SIGN OUT</button>
+		{:else}
+			<button onclick={signIn}>LOGIN</button>
+		{/if}
+	</div>
+</header> -->
+
 {@render children()}
 
+<!-- <footer>
+	<p>Footer</p>
+</footer> -->
+
 <style>
+	main {
+		display: flex;
+		flex: 1;
+	}
 	:global {
 		* {
 			padding: 0;
