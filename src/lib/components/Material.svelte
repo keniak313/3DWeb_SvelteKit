@@ -33,46 +33,48 @@
 	const newColor = $derived.by(() => {
 		if (setColor) {
 			return setColor.color;
+		} else if (color) {
+			return color;
 		}
-		return color;
+		console.log('NO COLORS - Setting Magenta');
+		return 'magenta';
 	});
 
 	let timeUniform = { value: 0 };
 
-	useTask((delta) => {
-		timeUniform.value += delta;
-	});
+	// useTask((delta) => {
+	// 	timeUniform.value += delta;
+	// }, {autoInvalidate: false});
 
-	const injectPulsing = (shader) => {
-		shader.uniforms.uTime = timeUniform;
-		shader.uniforms.uPulseSpeed = { value: 0.8 };
+	// const injectPulsing = (shader) => {
+	// 	shader.uniforms.uTime = timeUniform;
+	// 	shader.uniforms.uPulseSpeed = { value: 0.8 };
 
-		// 1. DODAJ DEKLARACJE (na samym początku fragment shadera)
-		shader.fragmentShader = `
-        uniform float uTime;
-        uniform float uPulseSpeed;
-        ${shader.fragmentShader}
-    `;
+	// 	// 1. DODAJ DEKLARACJE (na samym początku fragment shadera)
+	// 	shader.fragmentShader = `
+	//     uniform float uTime;
+	//     uniform float uPulseSpeed;
+	//     ${shader.fragmentShader}
+	// `;
 
-		// 2. WSTRZYKNIJ LOGIKĘ (tak jak wcześniej)
-		shader.fragmentShader = shader.fragmentShader.replace(
-			`#include <emissivemap_fragment>`,
-			`
-        #include <emissivemap_fragment>
-        
-        float minIntensity = 0.2; 
-        
-        
-        float t = fract(uTime * uPulseSpeed);
-		float triangle = abs(t * 2.0 - 1.0);
-		float pulseFactor = smoothstep(0.1, 0.9, triangle);
+	// 	// 2. WSTRZYKNIJ LOGIKĘ (tak jak wcześniej)
+	// 	shader.fragmentShader = shader.fragmentShader.replace(
+	// 		`#include <emissivemap_fragment>`,
+	// 		`
+	//     #include <emissivemap_fragment>
 
-		float pulse = mix(minIntensity, 1.0, pulseFactor);
-        
-        totalEmissiveRadiance *= pulse;
-        `
-		);
-	};
+	//     float minIntensity = 0.2;
+
+	//     float t = fract(uTime * uPulseSpeed);
+	// 	float triangle = abs(t * 2.0 - 1.0);
+	// 	float pulseFactor = smoothstep(0.1, 0.9, triangle);
+
+	// 	float pulse = mix(minIntensity, 1.0, pulseFactor);
+
+	//     totalEmissiveRadiance *= pulse;
+	//     `
+	// 	);
+	// };
 
 	$effect(() => {
 		const _deps = material;

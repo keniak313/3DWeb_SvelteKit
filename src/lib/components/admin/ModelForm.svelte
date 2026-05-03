@@ -194,11 +194,18 @@
 						<button
 							type="button"
 							onclick={() => {
-								if (selecedPart.id === part.id) {
-									selecedPart.id = null;
-								} else {
-									selecedPart.id = part.id;
-								}
+								config.setSelected({
+									modelName: model.name,
+									partModelName: part.modelName,
+									partName: part.name
+								});
+								console.log(config.selected);
+								console.log(config.selectedAsset);
+								// if (selecedPart.id === part.id) {
+								// 	selecedPart.id = null;
+								// } else {
+								// 	selecedPart.id = part.id;
+								// }
 							}}>{part.name}</button
 						>
 					{/each}
@@ -241,7 +248,7 @@
 									onChange={(value) => {
 										if (value.length <= 1) {
 											part.material = value[0]?.id;
-											part.color = materials?.find((m) => m.id === value[0].id)?.colors[0]?.id;
+											part.color = materials?.find((m) => m.id === value[0]?.id)?.colors[0]?.id;
 										}
 									}}
 								/>

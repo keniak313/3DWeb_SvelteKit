@@ -40,9 +40,9 @@
 	import { BlendFunction, SMAAPreset, ToneMappingMode, VignetteTechnique } from 'postprocessing';
 	import AssetPreloader, { getHDRI } from './AssetPreloader.svelte';
 	import Model from './Model.svelte';
-	import { scale } from '$lib/transitions';
-	import { getContext, setContext, untrack } from 'svelte';
 	import { page } from '$app/state';
+	import { getAppConfig } from '$lib/state/config.svelte';
+	import { sceneConfig } from '$lib/state/sceneConfig.svelte';
 
 	let isAdmin = $derived(page.route.id?.includes('(admin)'));
 
@@ -50,7 +50,9 @@
 
 	let composer = $state<EffectComposer | null>(null);
 
-	const config = getContext('config');
+	const config = getAppConfig('previewConfig');
+	// const previewConfig = getAppConfig('previewConfig');
+	// const sceneConfig = getSceneConfig();
 
 	const models = $derived(config.modelsHydrated);
 
@@ -90,30 +92,33 @@
 
 <!-- <T.AmbientLight intensity={0.5} visible /> -->
 
-<T.PerspectiveCamera makeDefault visible fov={35} near={0.01} far={20}>
-	<CameraControls
-		bind:ref={config.sceneConfig.controls}
-		oncreate={(ref) => {
-			ref.setLookAt(
-				...config.sceneConfig.camera.position,
-				...config.sceneConfig.camera.target,
-				true
-			);
-		}}
-		maxPolarAngle={Math.PI / 2}
-		minPolarAngle={Math.PI / 5}
-		polarAngle={Math.PI / 2.4}
-		azimuthAngle={Math.PI / 5}
-		dollySpeed={isStudioPage ? 1 : 0}
-		truckSpeed={isStudioPage ? 1 : 0}
-		oncontrolstart={() => {
-			isDragging = true;
-		}}
-		oncontrolend={() => {
-			isDragging = false;
-		}}
-	/>
-</T.PerspectiveCamera>
+{#if config.sceneConfig}
+	<T.PerspectiveCamera makeDefault visible fov={35} near={0.01} far={20}>
+		<CameraControls
+			oncreate={(ref) => {
+				sceneConfig.controls = ref;
+				ref.setLookAt(
+					...config.sceneConfig.camera.position,
+					...config.sceneConfig.camera.target,
+					true
+				);
+			}}
+			maxPolarAngle={Math.PI / 2}
+			minPolarAngle={Math.PI / 5}
+			polarAngle={Math.PI / 2.4}
+			azimuthAngle={Math.PI / 5}
+			dollySpeed={isStudioPage ? 1 : 0}
+			truckSpeed={isStudioPage ? 1 : 0}
+			oncontrolstart={() => {
+				isDragging = true;
+			}}
+			oncontrolend={() => {
+				isDragging = false;
+			}}
+			dampingFactor={0}
+		/>
+	</T.PerspectiveCamera>
+{/if}
 
 <T.DirectionalLight
 	position={[-14.9, 10, 10]}

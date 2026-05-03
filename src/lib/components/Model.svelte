@@ -16,7 +16,7 @@
 
 	let { model, isDragging, children = () => {} } = $props();
 
-	const config = getAppConfig();
+	const config = getAppConfig('previewConfig');
 
 	const gltf = $derived(getLoadedAssets().models?.[model.name]);
 

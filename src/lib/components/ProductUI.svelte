@@ -4,8 +4,9 @@
 	import Input from './Input.svelte';
 	import { Image } from '@unpic/svelte';
 	import ItemIcon from './ItemIcon.svelte';
+	import { getAppConfig } from '$lib/state/config.svelte';
 
-	const config = getContext('config');
+	const config = getAppConfig('previewConfig');
 
 	let selected = $derived(config.selectedAsset);
 

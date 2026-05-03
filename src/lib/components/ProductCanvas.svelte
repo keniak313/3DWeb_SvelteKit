@@ -2,11 +2,8 @@
 	import { Canvas } from '@threlte/core';
 	import { PCFShadowMap, WebGLRenderer } from 'three';
 	import Renderer from './Renderer.svelte';
-	import { Suspense } from '@threlte/extras';
+	import { PerfMonitor, Suspense } from '@threlte/extras';
 	import Scene from './Scene.svelte';
-	import { getAppConfig } from '$lib/state/config.svelte';
-
-	const config = getAppConfig();
 </script>
 
 <Canvas
@@ -17,8 +14,10 @@
 			preserveDrawingBuffer: true
 		});
 	}}
+	renderMode="on-demand"
 >
-	<Renderer config={config.sceneConfig} />
+	<Renderer />
+	<!-- <PerfMonitor /> -->
 	<Suspense>
 		<Scene />
 	</Suspense>

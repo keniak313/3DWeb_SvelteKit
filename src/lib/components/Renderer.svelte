@@ -1,4 +1,5 @@
 <script>
+	import { sceneConfig } from '$lib/state/sceneConfig.svelte';
 	import { useThrelte, useTask } from '@threlte/core';
 	import {
 		EffectComposer,
@@ -16,8 +17,6 @@
 	} from 'postprocessing';
 	import { HalfFloatType } from 'three';
 	import { SSAARenderPass } from 'three/examples/jsm/Addons.js';
-
-	let { config } = $props();
 
 	const { scene, renderer, camera, size } = useThrelte();
 
@@ -41,11 +40,11 @@
 				// 	resolutionScale: 1
 				// }),
 				new BloomEffect({
-					luminanceThreshold: config.bloom.luminanceThreshold,
-					luminanceSmoothing: config.bloom.luminanceSmoothing,
-					intensity: config.bloom.intensity,
-					radius: config.bloom.radius,
-					mipmapBlur: config.bloom.mipmapBlur,
+					luminanceThreshold: sceneConfig.bloom.luminanceThreshold,
+					luminanceSmoothing: sceneConfig.bloom.luminanceSmoothing,
+					intensity: sceneConfig.bloom.intensity,
+					radius: sceneConfig.bloom.radius,
+					mipmapBlur: sceneConfig.bloom.mipmapBlur,
 					resolutionScale: 1
 				}),
 				new ToneMappingEffect({

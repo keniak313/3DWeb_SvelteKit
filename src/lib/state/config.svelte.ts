@@ -6,22 +6,26 @@ import type { CameraControlsRef } from '@threlte/extras';
 import { untrack } from 'svelte';
 import { SvelteMap } from 'svelte/reactivity';
 
-import { getContext, setContext } from 'svelte';
+import { getContext } from 'svelte';
 import { Vector3 } from 'three';
+import { sceneConfig } from './sceneConfig.svelte';
 
-export const createConfig = (initData: {
-	models: Model[];
-	colors: Color[];
-	materials: Material[];
-	textures: Texture[];
-}) => {
-	const configData = initData.config;
+export const createConfig = (
+	initData: {
+		models: Model[];
+		colors: Color[];
+		materials: Material[];
+		textures: Texture[];
+	},
+	sourceConfig?: any
+) => {
+	// const configData = initData?.config || {};
 
-	const sceneConfig = $state({
-		controls: null as CameraControlsRef,
-		camera: configData.camera,
-		bloom: configData.bloom
-	});
+	// const sceneConfig = $state({
+	// 	controls: null,
+	// 	camera: configData.camera || { position: [0, 0, 5], target: [0, 0, 0] },
+	// 	bloom: configData.bloom || {}
+	// });
 
 	const selected = $state({
 		modelName: null,
@@ -35,6 +39,15 @@ export const createConfig = (initData: {
 		materials: initData.materials,
 		textures: initData.textures
 	});
+
+	if (sourceConfig) {
+		$effect(() => {
+			data.models = $state.snapshot(sourceConfig.data.models);
+			data.colors = $state.snapshot(sourceConfig.data.colors);
+			data.materials = $state.snapshot(sourceConfig.data.materials);
+			data.textures = $state.snapshot(sourceConfig.data.textures);
+		});
+	}
 
 	const modelsMap = $derived(new SvelteMap(data.models.map((m) => [m.id, m])));
 	const colorsMap = $derived(new SvelteMap(data.colors.map((c) => [c.id, c])));
@@ -332,6 +345,7 @@ export const createConfig = (initData: {
 	function setPosTargetFromCamera({ partName = null, socketName = null }) {
 		const position = sceneConfig.controls?.getPosition();
 		const target = sceneConfig.controls?.getTarget();
+		console.log(sceneConfig);
 		console.log(position);
 		console.log(target);
 
@@ -411,7 +425,7 @@ export const createConfig = (initData: {
 
 export type AppConfig = ReturnType<typeof createConfig>;
 
-export function getAppConfig() {
-	const config = getContext<AppConfig>('config');
+export function getAppConfig(configName = 'config') {
+	const config = getContext<AppConfig>(configName);
 	return config;
 }

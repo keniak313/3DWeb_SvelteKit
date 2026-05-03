@@ -67,7 +67,7 @@
 				</p>
 			{:else}
 				{#each data as item (item.id)}
-					{#if value.find((i) => i?.id === item.id)}
+					{#if value?.find((i) => i?.id === item.id)}
 						{#if item.color}
 							<div style="background-color: {item.color}; width: 20px; height: 20px"></div>
 						{/if}
@@ -78,13 +78,13 @@
 				{/each}
 			{/if}
 		{:else if value}
-			{#if data.find((i) => i?.id === value)?.color}
+			{#if data?.find((i) => i?.id === value)?.color}
 				<div
-					style="background-color: {data.find((i) => i?.id === value)
+					style="background-color: {data?.find((i) => i?.id === value)
 						?.color}; width: 20px; height: 20px"
 				></div>
 			{/if}
-			{data.find((i) => i?.id === value)?.name ?? 'INVALID COLOR'}
+			{data?.find((i) => i?.id === value)?.name ?? 'INVALID COLOR'}
 		{:else}
 			<p>
 				{placeholder}

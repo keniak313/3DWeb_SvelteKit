@@ -8,11 +8,11 @@
 	import ProductUI from './ProductUI.svelte';
 	import { page } from '$app/state';
 	import { PCFShadowMap, WebGLRenderer } from 'three';
-	import { getContext, onMount } from 'svelte';
+	import { getContext, onMount, setContext } from 'svelte';
 	import { decodeConfig } from '$lib/utilities/helpers';
 	import { getLoadedAssets } from './AssetPreloader.svelte';
 	import Renderer from './Renderer.svelte';
-	import { getAppConfig } from '$lib/state/config.svelte';
+	import { createConfig, getAppConfig } from '$lib/state/config.svelte';
 	import ProductCanvas from './ProductCanvas.svelte';
 
 	let isStudio = $state(false);
