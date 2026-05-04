@@ -8,6 +8,7 @@
 		checked = $bindable(),
 		style = '',
 		valueOnly = false,
+		error = null,
 		...props
 	} = $props();
 </script>
@@ -40,6 +41,9 @@
 			<input {id} name={id} bind:checked type="checkbox" {...props} />
 		{:else}
 			<input {id} name={id} bind:value {type} {...props} />
+		{/if}
+		{#if error}
+			<p style="color: red;">{error}</p>
 		{/if}
 	</label>
 {/if}

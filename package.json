@@ -52,7 +52,8 @@
 		"postprocessing": "^6.39.1",
 		"three": "0.184.0",
 		"threlte-postprocessing": "^0.0.10",
-		"tweakpane": "^4.0.5"
+		"tweakpane": "^4.0.5",
+		"zod": "^4.4.3"
 	},
 	"overrides": {
 		"three": "0.184.0",

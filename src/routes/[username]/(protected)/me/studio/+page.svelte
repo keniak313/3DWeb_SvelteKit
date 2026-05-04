@@ -8,7 +8,7 @@
 	import Product from '$lib/components/Product.svelte';
 	import { getAppConfig } from '$lib/state/config.svelte.js';
 
-	let { data } = $props();
+	let { data, form } = $props();
 
 	const config = getAppConfig();
 
@@ -69,13 +69,13 @@
 			<!-- <button onclick={() => (selectedMenu = 'upload')}>Upload</button> -->
 		</div>
 		<div class={selectedMenu === 'colors' ? '' : 'hidden'}>
-			<ColorsForm />
+			<ColorsForm {form} />
 		</div>
 		<div class={selectedMenu === 'materials' ? '' : 'hidden'}>
-			<MaterialsForm />
+			<MaterialsForm {form} />
 		</div>
 		<div class={selectedMenu === 'models' ? '' : 'hidden'}>
-			<ModelForm />
+			<ModelForm {form} />
 		</div>
 		<!-- <form
 			method="POST"

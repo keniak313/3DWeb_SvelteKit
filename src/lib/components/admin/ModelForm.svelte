@@ -1,5 +1,5 @@
 <script>
-	import { enhance } from '$app/forms';
+	import { applyAction, enhance } from '$app/forms';
 	import { GLTFLoader } from 'three/examples/jsm/Addons.js';
 	import Input from '../Input.svelte';
 	import { checkName, nanoid } from '$lib/utilities/helpers';
@@ -10,6 +10,8 @@
 	import { useDraco } from '@threlte/extras';
 	import ItemIcon from '../ItemIcon.svelte';
 	import { getAppConfig } from '$lib/state/config.svelte';
+
+	let { form } = $props();
 
 	let selectedModel = $state({ id: null });
 	let selecedPart = $state({ id: null });
@@ -76,9 +78,13 @@
 		clearTimeout(timeout);
 		timeout = setTimeout(() => {
 			formEl?.requestSubmit();
-		}, 2000);
+		}, 500);
 	});
 </script>
+
+{#if form}
+	{console.log('MODELS ERRORS:', form)}
+{/if}
 
 <form
 	bind:this={formEl}
@@ -99,14 +105,19 @@
 		}
 		return async ({ update, result }) => {
 			console.log('ZAPISYWANIE');
-			await update({ reset: false });
-			Object.values(models).forEach((model) => {
-				if (model.newIcon) {
-					model.newIcon = false;
-					model.icon = result.data.updatedModels.find((m) => m.id === model.id).icon;
-				}
-			});
-			console.log('ZAPISANE');
+			if (result.type === 'success') {
+				await update({ reset: false });
+				Object.values(models).forEach((model) => {
+					if (model.newIcon) {
+						model.newIcon = false;
+						model.icon = result.data.updatedModels.find((m) => m.id === model.id).icon;
+					}
+				});
+				form = null;
+				console.log('ZAPISANE');
+			} else {
+				applyAction(result);
+			}
 		};
 	}}
 >
@@ -139,7 +150,7 @@
 			>
 		{/each}
 
-		{#each models as model (model.id)}
+		{#each models as model, index (model.id)}
 			{@const time = new Date(model.updatedAt).getTime()}
 			<div class={config.selectedAsset?.model?.name === model.name ? '' : 'hidden'}>
 				<div>
@@ -182,11 +193,13 @@
 					id={'model-displayName-' + model.id}
 					title="Display Name"
 					bind:value={model.displayName}
+					error={form?.error?.items[index]?.properties?.displayName?.errors[0]}
 				/>
 				<Input
 					id={'model-description-' + model.id}
 					title="Description"
 					bind:value={model.description}
+					error={form?.error?.items[index]?.properties?.description?.errors[0]}
 				/>
 				<div class="parts">
 					<p>Parts:</p>

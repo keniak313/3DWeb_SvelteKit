@@ -1,9 +1,10 @@
 <script>
 	import { nanoid } from '$lib/utilities/helpers';
-	import { getContext } from 'svelte';
 	import Input from '../Input.svelte';
-	import { enhance } from '$app/forms';
+	import { applyAction, enhance } from '$app/forms';
 	import { getAppConfig } from '$lib/state/config.svelte';
+
+	let { form } = $props();
 
 	const config = getAppConfig();
 
@@ -25,11 +26,15 @@
 		clearTimeout(timeout);
 		timeout = setTimeout(() => {
 			formEl?.requestSubmit();
-		}, 2000);
+		}, 500);
 	});
 </script>
 
-{#snippet renderColor(color)}
+{#if form}
+	{console.log('FORM ERROR', form)}
+{/if}
+
+{#snippet renderColor(color, index)}
 	<div class="color">
 		<Input id="color-id" value={color.id} hidden style="display: none;" />
 		<Input
@@ -44,8 +49,15 @@
 				title="Display Name"
 				bind:value={color.displayName}
 				type="text"
+				error={form?.error?.items[index]?.properties?.displayName?.errors[0]}
 			/>
-			<Input id={'color-name-' + color.id} title="Name" bind:value={color.name} type="text" />
+			<Input
+				id={'color-name-' + color.id}
+				title="Name"
+				bind:value={color.name}
+				type="text"
+				error={form?.error?.items[index]?.properties?.name?.errors[0]}
+			/>
 			<Input
 				id={'color-deletedAt-' + color.id}
 				title="Deleted At"
@@ -83,6 +95,9 @@
 			// await update({ reset: false });
 			if (result.type === 'success') {
 				console.log('ZAPISANO');
+				form = null;
+			} else {
+				applyAction(result);
 			}
 		};
 	}}
@@ -90,16 +105,16 @@
 	<h2>Colors</h2>
 	<hr />
 	<div class="colors">
-		{#each colors as color (color.id)}
+		{#each colors as color, index (color.id)}
 			{#if color.id !== '0' && color.deletedAt === null}
-				{@render renderColor(color)}
+				{@render renderColor(color, index)}
 			{/if}
 		{/each}
 		{#if colors.some((color) => color.deletedAt !== null)}
 			<h2>ARCHIVED</h2>
-			{#each colors as color (color.id)}
+			{#each colors as color, index (color.id)}
 				{#if color.id !== '0' && color.deletedAt !== null}
-					{@render renderColor(color)}
+					{@render renderColor(color, index)}
 				{/if}
 			{/each}
 		{/if}

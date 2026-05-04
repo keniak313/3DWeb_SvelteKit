@@ -1,10 +1,12 @@
 <script>
 	import { nanoid } from 'nanoid';
 	import Input from '../Input.svelte';
-	import { enhance } from '$app/forms';
+	import { applyAction, enhance } from '$app/forms';
 	import { getContext } from 'svelte';
 	import InputSelect from '../InputSelect.svelte';
 	import { Image } from '@unpic/svelte';
+
+	let { form } = $props();
 
 	const config = getContext('config');
 
@@ -34,9 +36,13 @@
 		clearTimeout(timeout);
 		timeout = setTimeout(() => {
 			formEl?.requestSubmit();
-		}, 2000);
+		}, 500);
 	});
 </script>
+
+{#if form}
+	{console.log('MATS FORMS:', form)}
+{/if}
 
 <form
 	method="POST"
@@ -48,6 +54,9 @@
 			// await update({ reset: false });
 			if (result.type === 'success') {
 				console.log('ZAPISANO');
+				form = null;
+			} else {
+				applyAction(result);
 			}
 		};
 	}}
@@ -55,10 +64,11 @@
 	<h2>Materials</h2>
 	<hr />
 	<div class="materials">
-		{#each materials as material (material.id)}
+		{#each materials as material, index (material.id)}
 			{#if material.name !== 'default'}
 				<button
 					type="button"
+					style={form?.error?.items[index] ? 'background-color: red;' : ''}
 					onclick={() => {
 						if (selectedMat.id === material.id) {
 							selectedMat.id = null;
@@ -70,16 +80,23 @@
 			{/if}
 			<div class={'material' + (selectedMat.id === material.id ? '' : ' hidden')}>
 				<Input id="material-id" value={material.id} hidden style="display: none;" />
-				<Input id={'material-name-' + material.id} title="Name" bind:value={material.name} />
+				<Input
+					id={'material-name-' + material.id}
+					title="Name"
+					bind:value={material.name}
+					error={form?.error?.items[index]?.properties?.name?.errors[0]}
+				/>
 				<Input
 					id={'material-displayName-' + material.id}
 					title="Display Name"
 					bind:value={material.displayName}
+					error={form?.error?.items[index]?.properties?.displayName?.errors[0]}
 				/>
 				<Input
 					id={'material-description-' + material.id}
 					title="Description"
 					bind:value={material.description}
+					error={form?.error?.items[index]?.properties?.description?.errors[0]}
 				/>
 				<Input
 					id={'material-metalness-' + material.id}
@@ -89,6 +106,7 @@
 					max="1"
 					type="number"
 					bind:value={material.metalness}
+					error={form?.error?.items[index]?.properties?.metalness?.errors[0]}
 				/>
 				<Input
 					id={'material-roughness-' + material.id}
@@ -98,13 +116,15 @@
 					max="1"
 					type="number"
 					bind:value={material.roughness}
+					error={form?.error?.items[index]?.properties?.roughness?.errors[0]}
 				/>
-				<Input
+				<!-- <Input
 					id={'material-transparent-' + material.id}
 					title="Transparent"
 					type="checkbox"
 					bind:checked={material.transparent}
-				/>
+					error={form?.error?.items[index]?.properties?.transparent?.errors[0]}
+				/> -->
 				<Input
 					id={'material-opacity-' + material.id}
 					title="Opacity"
@@ -113,6 +133,7 @@
 					min="0"
 					max="1"
 					bind:value={material.opacity}
+					error={form?.error?.items[index]?.properties?.opacity?.errors[0]}
 				/>
 				<InputSelect
 					id={'material-colors-' + material.id}
@@ -126,6 +147,7 @@
 							material.color = value[0]?.id;
 						}
 					}}
+					error={form?.error?.items[index]?.properties?.colors?.errors[0]}
 				/>
 				<InputSelect
 					id={'material-color-' + material.id}
@@ -134,6 +156,7 @@
 						return colors.find((c) => c.id === color.id);
 					})}
 					bind:value={material.color}
+					error={form?.error?.items[index]?.properties?.color?.errors[0]}
 				/>
 				<div class="textures">
 					{#if textures.length > 0}

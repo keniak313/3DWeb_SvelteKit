@@ -6,7 +6,8 @@
 		data = $bindable(),
 		value = $bindable(),
 		multiple = false,
-		onChange = () => {}
+		onChange = () => {},
+		error = null
 	} = $props();
 
 	let isOpen = $state(false);
@@ -68,12 +69,14 @@
 			{:else}
 				{#each data as item (item.id)}
 					{#if value?.find((i) => i?.id === item.id)}
-						{#if item.color}
-							<div style="background-color: {item.color}; width: 20px; height: 20px"></div>
-						{/if}
-						<p>
-							{item.name}
-						</p>
+						<div class="item">
+							{#if item.color}
+								<div style="background-color: {item.color}; width: 20px; height: 20px"></div>
+							{/if}
+							<p>
+								{item.name}
+							</p>
+						</div>
 					{/if}
 				{/each}
 			{/if}
@@ -91,6 +94,9 @@
 			</p>
 		{/if}
 	</button>
+	{#if error}
+		<p style="color: red;">{error}</p>
+	{/if}
 	<div class="list">
 		{#if isOpen}
 			<div class="list-items">
@@ -112,10 +118,12 @@
 							onChange(value);
 						}}
 					>
-						{#if item.color}
-							<div style="background-color: {item.color}; width: 20px; height: 20px"></div>
-						{/if}
-						{item.name}
+						<div class="item">
+							{#if item.color}
+								<div style="background-color: {item.color}; width: 20px; height: 20px"></div>
+							{/if}
+							<p>{item.name}</p>
+						</div>
 					</button>
 				{/each}
 			</div>
@@ -129,6 +137,7 @@
 	}
 	.select-btn {
 		display: flex;
+		flex-wrap: wrap;
 		gap: 0.5rem;
 	}
 	.list {
@@ -146,5 +155,10 @@
 	}
 	.selected {
 		background-color: green;
+	}
+
+	.item {
+		display: flex;
+		gap: 0.4rem;
 	}
 </style>

@@ -1,6 +1,6 @@
 import { eq, getTableColumns, inArray, sql } from 'drizzle-orm';
 import { color, config, material, model, session, texture } from '$lib/server/db/schema.js';
-import { error, redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { put } from '@vercel/blob';
 import { BLOB_READ_WRITE_TOKEN } from '$env/static/private';
 import { updateConfig } from '$lib/server/services/configService.js';
@@ -8,6 +8,15 @@ import { updateColors } from '$lib/server/services/colorService.js';
 import { updateMaterials } from '$lib/server/services/materialService.js';
 import { updateModels } from '$lib/server/services/modelService.js';
 import { updateTextures } from '$lib/server/services/textureService.js';
+import z from 'zod';
+
+const requiredString = z.string().min(1, 'Required field');
+
+const safeString = z.string().regex(/^[a-zA-Z0-9_!\- ]*$/, 'Invalid characters');
+
+const safeStringNoSpaces = z
+	.string()
+	.regex(/^[a-zA-Z0-9_!\-]+$/, 'Spaces and special characters are not allowed');
 
 export const actions = {
 	// logout: async ({ locals, cookies }) => {
@@ -43,6 +52,17 @@ export const actions = {
 			};
 		});
 
+		const colorSchema = z.object({
+			id: z.string(),
+			color: z.string().min(1, 'Color is required'),
+			displayName: safeString,
+			name: requiredString.pipe(safeStringNoSpaces),
+			deletedAt: z.string().nullable(),
+			userId: z.string()
+		});
+
+		const parsedData = z.array(colorSchema).safeParse(newColors);
+
 		const colorColumns = getTableColumns(color);
 		const colorUpdateFields = Object.fromEntries(
 			Object.entries(colorColumns)
@@ -54,11 +74,19 @@ export const actions = {
 				])
 		);
 
-		if (newColors.length > 0) {
+		if (!parsedData.success) {
+			const errors = z.treeifyError(parsedData.error);
+			console.log('DATA ERRORS', errors);
+			return fail(400, { error: errors });
+		}
+
+		if (parsedData.data.length > 0) {
 			await locals.db
 				.insert(color)
-				.values(newColors)
+				.values(parsedData.data)
 				.onConflictDoUpdate({ target: color.id, set: colorUpdateFields });
+
+			return { success: true, error: null };
 		}
 	},
 	saveMaterials: async ({ request, locals }) => {
@@ -79,13 +107,29 @@ export const actions = {
 				description: formData.get(`material-description-${id}`),
 				metalness: Number(formData.get(`material-metalness-${id}`)),
 				roughness: Number(formData.get(`material-roughness-${id}`)),
-				transparent: formData.get(`material-transparent-${id}`) === 'on' ? 1 : 0,
+				// transparent: formData.get(`material-transparent-${id}`) === 'on' ? 1 : 0,
 				opacity: Number(formData.get(`material-opacity-${id}`)),
 				color: formData.get(`material-color-${id}`) || null,
 				colors: JSON.parse(formData.get(`material-colors-${id}`)),
 				userId: userId
 			};
 		});
+
+		const materialSchema = z.object({
+			id: z.string(),
+			name: requiredString.pipe(safeStringNoSpaces),
+			displayName: safeString,
+			description: safeString,
+			metalness: z.number(),
+			roughness: z.number(),
+			// transparent: z.number(),
+			opacity: z.number(),
+			color: z.string({ message: 'Color is required' }),
+			colors: z.array(z.object({ id: z.string() })).min(1, 'Colors are required'),
+			userId: z.string()
+		});
+
+		const parsedData = z.array(materialSchema).safeParse(newMaterials);
 
 		const materialColumns = getTableColumns(material);
 		const materialUpdateFields = Object.fromEntries(
@@ -98,13 +142,19 @@ export const actions = {
 				])
 		);
 
-		if (newMaterials.length > 0) {
+		if (!parsedData.success) {
+			const errors = z.treeifyError(parsedData.error);
+			console.log('DATA ERRORS', errors);
+			return fail(400, { error: errors });
+		}
+
+		if (parsedData.data.length > 0) {
 			await locals.db
 				.insert(material)
-				.values(newMaterials)
+				.values(parsedData.data)
 				.onConflictDoUpdate({ target: material.id, set: materialUpdateFields });
 
-			// console.log(newMaterials);
+			return { success: true, error: null };
 		}
 	},
 	saveModels: async ({ request, locals }) => {
@@ -214,6 +264,29 @@ export const actions = {
 			});
 		}
 
+		const modelSchema = z.object({
+			id: z.string(),
+			name: requiredString.pipe(safeStringNoSpaces),
+			displayName: safeString,
+			description: safeString,
+			url: z.string(),
+			icon: z.string().nullable(),
+			isAttachment: z.boolean(),
+			socket: z.string().nullable(),
+			updatedAt: z.string(),
+			userId: z.string()
+		});
+
+		//DODAC SOCKETS I PARTS DO ZAKRESU WALIDACJI
+
+		const parsedData = z.array(modelSchema).safeParse(newModels);
+
+		if (!parsedData.success) {
+			const errors = z.treeifyError(parsedData.error);
+			console.log('DATA ERRORS', errors);
+			return fail(400, { error: errors });
+		}
+
 		const modelsColumns = getTableColumns(model);
 		const modelsUpdateFields = Object.fromEntries(
 			Object.entries(modelsColumns)
@@ -221,12 +294,12 @@ export const actions = {
 				.map(([key, column]) => [key, sql.raw(`excluded.${column.name}`)])
 		);
 
-		if (newModels.length > 0) {
-			await locals.db
-				.insert(model)
-				.values(newModels)
-				.onConflictDoUpdate({ target: model.id, set: modelsUpdateFields });
-		}
+		// if (parsedData.data.length > 0) {
+		// 	await locals.db
+		// 		.insert(model)
+		// 		.values(parsedData.data)
+		// 		.onConflictDoUpdate({ target: model.id, set: modelsUpdateFields });
+		// }
 
 		const updatedModels = await locals.db.query.model.findMany({
 			where: eq(model.userId, userId)

@@ -95,7 +95,7 @@
 		roughness={material?.roughness}
 		metalness={material?.metalness}
 		opacity={material?.opacity}
-		transparent={material.transparent}
+		transparent={material.opacity < 1 ? true : false}
 		aoMap={aoMap || $defaultTexture}
 		color={newColor}
 		emissive="white"
