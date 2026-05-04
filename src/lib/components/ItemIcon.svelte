@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { dev } from '$app/environment';
 	import { Image } from '@unpic/svelte';
 	import { transform } from 'unpic/providers/vercel';
 
@@ -12,13 +13,17 @@
 </script>
 
 {#if srcDate}
-	<Image
-		src={srcDate}
-		width={size}
-		height={size}
-		transformer={transform}
-		options={{ vercel: { force: true, prefix: '_vercel' } }}
-	/>
+	{#if !dev}
+		<Image
+			src={srcDate}
+			width={size}
+			height={size}
+			cdn="vercel"
+			options={{ vercel: { force: true, prefix: '_vercel' } }}
+		/>
+	{:else}
+		<Image src={srcDate} width={size} height={size} />
+	{/if}
 {:else}
 	<div style={`width: ${size}px; height: ${size}px; background-color: magenta`}></div>
 {/if}

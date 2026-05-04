@@ -70,20 +70,20 @@
 					<div class="parts">
 						<p>PARTS</p>
 
-						<div class="parts-list">
+						<div class="list">
 							{#if !modelExists}
 								{#each Object.values(newModel?.parts) as part (part.id)}
 									<p>{part.name}</p>
 								{/each}
 							{:else}
-								<div class="parts-compare">
-									<div class="parts-compare-list">
+								<div class="compare">
+									<div class="compare-list">
 										<p>NEW</p>
 										{#each Object.values(newModel?.parts) as part (part.id)}
 											<p>{part.name}</p>
 										{/each}
 									</div>
-									<div class="parts-compare-list">
+									<div class="compare-list">
 										<p>EXISTING</p>
 										{#each Object.values(existingModel.parts) as part (part.id)}
 											<p>{part.name}</p>
@@ -98,9 +98,26 @@
 				{#if newModel.sockets}
 					<div class="sockets">
 						<p>SOCKETS</p>
-						{#each Object.values(newModel.sockets) as socket (socket.id)}
-							<p>{socket.name}</p>
-						{/each}
+						{#if !modelExists}
+							{#each Object.values(newModel.sockets) as socket (socket.id)}
+								<p>{socket.name}</p>
+							{/each}
+						{:else}
+							<div class="compare">
+								<div class="compare-list">
+									<p>NEW</p>
+									{#each Object.values(newModel.sockets) as socket (socket.id)}
+										<p>{socket.name}</p>
+									{/each}
+								</div>
+								<div class="compare-list">
+									<p>EXISTING</p>
+									{#each Object.values(existingModel.sockets) as socket (socket.id)}
+										<p>{socket.name}</p>
+									{/each}
+								</div>
+							</div>
+						{/if}
 					</div>
 				{/if}
 			{/if}
@@ -266,6 +283,27 @@
 					}
 				});
 
+				const newSockets = gltf.children.reduce((acc, child) => {
+					if (!checkName(child.name).socket().isSocket) return acc;
+					const socket = checkName(child.name).socket();
+					acc[socket.name] = {
+						id: nanoid(5),
+						name: socket.name,
+						attachments: [],
+						attachment: null,
+						position: [3, 2, 3],
+						target: [0, 0.8, 0]
+					};
+					return acc;
+				}, {});
+
+				Object.values(newSockets).forEach((socket) => {
+					const existingSocket = existingModel.sockets[socket.name];
+					if (existingSocket) {
+						newSockets[socket.name] = $state.snapshot(existingSocket);
+					}
+				});
+
 				console.log('UPDATED PARTS', newParts);
 
 				modelExists = true;
@@ -277,6 +315,7 @@
 				newModel.url = existingModel.url;
 				newModel.icon = existingModel.icon;
 				newModel.parts = newParts;
+				newModel.sockets = newSockets;
 				newModel.file = file;
 			}
 
@@ -346,19 +385,19 @@
 		width: 100%;
 	}
 
-	.parts-list {
+	.list {
 		display: flex;
 		flex-direction: column;
 		flex: 1;
 	}
 
-	.parts-compare {
+	.compare {
 		display: flex;
 		width: 100%;
 		gap: 0.5rem;
 	}
 
-	.parts-compare-list {
+	.compare-list {
 		display: flex;
 		flex-direction: column;
 		gap: 0.2rem;

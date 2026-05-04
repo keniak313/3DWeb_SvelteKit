@@ -106,7 +106,7 @@
 		return async ({ update, result }) => {
 			console.log('ZAPISYWANIE');
 			if (result.type === 'success') {
-				await update({ reset: false });
+				// await update({ reset: false, invalidateAll: false });
 				Object.values(models).forEach((model) => {
 					if (model.newIcon) {
 						model.newIcon = false;
