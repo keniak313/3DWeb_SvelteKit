@@ -4,7 +4,7 @@
 		"remotePatterns": [
 			{
 				"protocol": "https",
-				"hostname": "://vercel-storage.com"
+				"hostname": "n6j59vekvkaxwrxa.public.blob.vercel-storage.com"
 			}
 		]
 	}
