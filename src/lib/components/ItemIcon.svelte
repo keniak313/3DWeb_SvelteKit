@@ -19,7 +19,7 @@
 			width={size}
 			height={size}
 			cdn="vercel"
-			options={{ vercel: { force: true, prefix: '_vercel' } }}
+			options={{ vercel: { force: true } }}
 		/>
 	{:else}
 		<Image src={srcDate} width={size} height={size} />

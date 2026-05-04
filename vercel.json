@@ -1,0 +1,11 @@
+{
+	"images": {
+		"sizes": [64, 128, 256, 384],
+		"remotePatterns": [
+			{
+				"protocol": "https",
+				"hostname": "://vercel-storage.com"
+			}
+		]
+	}
+}
