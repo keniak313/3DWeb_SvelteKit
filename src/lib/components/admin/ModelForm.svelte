@@ -124,9 +124,10 @@
 	<h2>MODELS</h2>
 	<hr />
 	{#if models.length > 0}
-		{#each models.filter((m) => !m.isAttachment) as model (model.id)}
+		{#each models as model, index (model.id)}
 			<button
 				type="button"
+				style={form?.error?.items[index] ? 'background-color: red;' : ''}
 				onclick={() => {
 					if (config.selectedAsset?.model?.name === model.name) {
 						config.clearSelection();
@@ -136,10 +137,11 @@
 				}}>{model.name}</button
 			>
 		{/each}
-		<p>ATTACHMENTS:</p>
-		{#each models.filter((m) => m.isAttachment) as model (model.id)}
+		<!-- <p>ATTACHMENTS:</p> -->
+		<!-- {#each models.filter((m) => m.isAttachment) as model, index (model.id)}
 			<button
 				type="button"
+				style={form?.error?.items[index] ? 'background-color: red;' : ''}
 				onclick={() => {
 					if (config.selectedAsset?.model?.name === model.name) {
 						config.clearSelection();
@@ -148,20 +150,14 @@
 					}
 				}}>{model.name}</button
 			>
-		{/each}
+		{/each} -->
 
 		{#each models as model, index (model.id)}
 			{@const time = new Date(model.updatedAt).getTime()}
 			<div class={config.selectedAsset?.model?.name === model.name ? '' : 'hidden'}>
 				<div>
 					<p>ICON</p>
-					<ItemIcon
-						src={model.icon}
-						updatedAt={model.updatedAt}
-						isNew={model.newIcon}
-						width={100}
-						height={100}
-					/>
+					<ItemIcon src={model.icon} updatedAt={model.updatedAt} isNew={model.newIcon} size={100} />
 					<!-- {#if model.icon}
 						{#if !model.newIcon}
 							<Image src={model.icon + '?v=' + time} alt="" width="100" height="100" />
@@ -203,9 +199,12 @@
 				/>
 				<div class="parts">
 					<p>Parts:</p>
-					{#each Object.values(model.parts) as part (part.id)}
+					{#each Object.values(model.parts) as part, partIndex (part.id)}
 						<button
 							type="button"
+							style={form?.error?.items[index]?.properties?.parts?.properties?.[part.name]
+								? 'background-color: red;'
+								: ''}
 							onclick={() => {
 								config.setSelected({
 									modelName: model.name,
@@ -246,11 +245,15 @@
 									id={'part-displayName-' + part.id}
 									title="Display Name"
 									bind:value={part.displayName}
+									error={form?.error?.items?.[index]?.properties?.parts?.properties?.[part.name]
+										?.properties?.displayName?.errors[0]}
 								/>
 								<Input
 									id={'part-description-' + part.id}
 									title="Description"
 									bind:value={part.description}
+									error={form?.error?.items?.[index]?.properties?.parts?.properties?.[part.name]
+										?.properties?.description?.errors[0]}
 								/>
 								<InputSelect
 									id={'part-materials-' + part.id}
@@ -264,6 +267,8 @@
 											part.color = materials?.find((m) => m.id === value[0]?.id)?.colors[0]?.id;
 										}
 									}}
+									error={form?.error?.items?.[index]?.properties?.parts?.properties?.[part.name]
+										?.properties?.materials?.errors[0]}
 								/>
 								<InputSelect
 									id={'part-material-' + part.id}
@@ -277,6 +282,8 @@
 											part.color = materials?.find((m) => m.id === value)?.colors[0]?.id;
 										}
 									}}
+									error={form?.error?.items?.[index]?.properties?.parts?.properties?.[part.name]
+										?.properties?.material?.errors[0]}
 								/>
 								<InputSelect
 									id={'part-color-' + part.id}
@@ -287,6 +294,8 @@
 											return colors?.find((c) => c.id === color.id);
 										})}
 									bind:value={part.color}
+									error={form?.error?.items?.[index]?.properties?.parts?.properties?.[part.name]
+										?.properties?.color?.errors[0]}
 								/>
 								{#if !model.isAttachment}
 									<div class="row">
@@ -378,6 +387,7 @@
 											socket.attachment = value[0]?.id;
 										}
 									}}
+									error={form?.error?.items[index]?.properties?.sockets?.errors[0]}
 								/>
 
 								<InputSelect
@@ -388,6 +398,7 @@
 										return attachments?.find((a) => a.id === att.id);
 									})}
 									bind:value={socket.attachment}
+									error={form?.error?.items[index]?.properties?.sockets?.errors[0]}
 								/>
 								{#if socket.position && socket.target}
 									<div class="row">

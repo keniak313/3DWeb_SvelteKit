@@ -272,12 +272,44 @@ export const actions = {
 			url: z.string(),
 			icon: z.string().nullable(),
 			isAttachment: z.boolean(),
+			parts: z.record(
+				z.string(),
+				z.object({
+					id: z.string(),
+					name: requiredString.pipe(safeStringNoSpaces),
+					modelName: z.string(),
+					displayName: safeString,
+					description: safeString,
+					materials: z.array(z.object({ id: z.string() })).min(1, 'Materials are required'),
+					material: z.string({ message: 'Material is required' }),
+					color: z.string({ message: 'Color is required' }),
+					isAttachment: z.boolean(),
+					socket: z.string().nullable(),
+					position: z.array(z.number()).length(3),
+					target: z.array(z.number()).length(3)
+				})
+			),
+			sockets: z
+				.record(
+					z.string(),
+					z.object({
+						id: z.string(),
+						name: requiredString.pipe(safeStringNoSpaces),
+						attachment: z.string(),
+						attachments: z.array(z.object({ id: z.string() })),
+						position: z.array(z.number()).length(3),
+						target: z.array(z.number()).length(3)
+					})
+				)
+				.optional(),
 			socket: z.string().nullable(),
 			updatedAt: z.string(),
 			userId: z.string()
 		});
 
 		//DODAC SOCKETS I PARTS DO ZAKRESU WALIDACJI
+
+		console.log('DANE DO WALIDACJI:', newModels);
 
 		const parsedData = z.array(modelSchema).safeParse(newModels);
 
@@ -294,12 +326,12 @@ export const actions = {
 				.map(([key, column]) => [key, sql.raw(`excluded.${column.name}`)])
 		);
 
-		// if (parsedData.data.length > 0) {
-		// 	await locals.db
-		// 		.insert(model)
-		// 		.values(parsedData.data)
-		// 		.onConflictDoUpdate({ target: model.id, set: modelsUpdateFields });
-		// }
+		if (parsedData.data.length > 0) {
+			await locals.db
+				.insert(model)
+				.values(parsedData.data)
+				.onConflictDoUpdate({ target: model.id, set: modelsUpdateFields });
+		}
 
 		const updatedModels = await locals.db.query.model.findMany({
 			where: eq(model.userId, userId)
