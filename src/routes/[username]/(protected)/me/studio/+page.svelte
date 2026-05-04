@@ -49,6 +49,10 @@
 	}
 </script>
 
+{#if form}
+	{console.log('FORM??', form)}
+{/if}
+
 <div class="wrapper">
 	<div class="left">
 		<CdnCheck>
@@ -62,10 +66,19 @@
 			{#if data.session.user.role === 'admin'}
 				<button onclick={() => (selectedMenu = 'scene')}>Scene</button>
 			{/if}
-			<button onclick={() => (selectedMenu = 'colors')}>Colors</button>
-			<button onclick={() => (selectedMenu = 'materials')}>Materials</button>
+			<button
+				style={form?.error?.formName === 'colors' ? 'background-color: red;' : ''}
+				onclick={() => (selectedMenu = 'colors')}>Colors</button
+			>
+			<button
+				style={form?.error?.formName === 'materials' ? 'background-color: red;' : ''}
+				onclick={() => (selectedMenu = 'materials')}>Materials</button
+			>
 			<!-- <button onclick={() => (selectedMenu = 'textures')}>Textures</button> -->
-			<button onclick={() => (selectedMenu = 'models')}>Models</button>
+			<button
+				style={form?.error?.formName === 'models' ? 'background-color: red;' : ''}
+				onclick={() => (selectedMenu = 'models')}>Models</button
+			>
 			<!-- <button onclick={() => (selectedMenu = 'upload')}>Upload</button> -->
 		</div>
 		<div class={selectedMenu === 'colors' ? '' : 'hidden'}>

@@ -77,7 +77,7 @@ export const actions = {
 		if (!parsedData.success) {
 			const errors = z.treeifyError(parsedData.error);
 			console.log('DATA ERRORS', errors);
-			return fail(400, { error: errors });
+			return fail(400, { error: { ...errors, formName: 'colors' } });
 		}
 
 		if (parsedData.data.length > 0) {
@@ -145,7 +145,7 @@ export const actions = {
 		if (!parsedData.success) {
 			const errors = z.treeifyError(parsedData.error);
 			console.log('DATA ERRORS', errors);
-			return fail(400, { error: errors });
+			return fail(400, { error: { ...errors, formName: 'materials' } });
 		}
 
 		if (parsedData.data.length > 0) {
@@ -316,7 +316,7 @@ export const actions = {
 		if (!parsedData.success) {
 			const errors = z.treeifyError(parsedData.error);
 			console.log('DATA ERRORS', errors);
-			return fail(400, { error: errors });
+			return fail(400, { error: { ...errors, formName: 'models' } });
 		}
 
 		const modelsColumns = getTableColumns(model);
