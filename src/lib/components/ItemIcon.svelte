@@ -24,7 +24,7 @@
 				transformer={(params) => {
 					const { src, ...options } = params;
 					const url = transform(src, options);
-					return `${url}?v=${new Date(updatedAt).getTime()}`;
+					return `${url}&v=${new Date(updatedAt).getTime()}`;
 				}}
 			/>
 		{/if}
