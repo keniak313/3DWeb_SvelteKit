@@ -12,7 +12,7 @@ const config = {
 		// See https://svelte.dev/docs/kit/adapters for more information about adapters.
 		adapter: adapter({
 			images: {
-				sizes: [64, 128, 256, 512, 1024, 2048],
+				sizes: [50, 64, 80, 100, 128, 256, 512, 1024, 2048],
 				formats: ['image/webp'],
 				minimumCacheTTL: 300,
 				domains: ['3d-web-svelte-kit.vercel.app', 'n6j59vekvkaxwrxa.public.blob.vercel-storage.com']

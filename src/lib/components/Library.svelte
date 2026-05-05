@@ -27,7 +27,7 @@
 							src={model.icon}
 							updatedAt={model.updatedAt}
 							isNew={model.newIcon}
-							size={128}
+							size={80}
 						/>
 						<p>{model.name}</p>
 					</div>
@@ -42,7 +42,7 @@
 			{#if textures.length > 0}
 				{#each textures as texture (texture.id)}
 					<div class="item">
-						<ItemIcon src={texture.url} updatedAt={texture.updatedAt} size={128} />
+						<ItemIcon src={texture.url} updatedAt={texture.updatedAt} size={80} />
 						<p>{texture.name}</p>
 					</div>
 				{/each}
