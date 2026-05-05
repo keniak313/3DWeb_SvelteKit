@@ -17,7 +17,16 @@
 		{#if isNew}
 			<Image {src} width={size} height={size} />
 		{:else}
-			<Image {src} width={size} height={size} cdn="vercel" />
+			<Image
+				{src}
+				width={size}
+				height={size}
+				transformer={(params) => {
+					const { src, ...options } = params;
+					const url = transform(src, options);
+					return `${url}?v=${new Date(updatedAt).getTime()}`;
+				}}
+			/>
 		{/if}
 	{:else}
 		<Image {srcDate} width={size} height={size} />
