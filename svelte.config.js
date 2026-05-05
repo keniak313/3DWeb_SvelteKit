@@ -15,7 +15,7 @@ const config = {
 				sizes: [64, 128, 256, 512, 1024, 2048],
 				formats: ['image/webp'],
 				minimumCacheTTL: 300,
-				domains: ['3d-web-svelte-kit.vercel.app']
+				domains: ['3d-web-svelte-kit.vercel.app', 'n6j59vekvkaxwrxa.public.blob.vercel-storage.com']
 			}
 		}),
 		typescript: {
