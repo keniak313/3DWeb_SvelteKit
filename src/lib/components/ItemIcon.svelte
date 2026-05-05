@@ -21,6 +21,7 @@
 				{src}
 				width={size}
 				height={size}
+				cdn="vercel"
 				transformer={(params) => {
 					const { src, ...options } = params;
 
