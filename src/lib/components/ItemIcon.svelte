@@ -14,7 +14,11 @@
 
 {#if srcDate}
 	{#if !dev}
-		<Image {src} width={size} height={size} cdn="vercel" />
+		{#if isNew}
+			<Image {src} width={size} height={size} />
+		{:else}
+			<Image {src} width={size} height={size} cdn="vercel" />
+		{/if}
 	{:else}
 		<Image {srcDate} width={size} height={size} />
 	{/if}

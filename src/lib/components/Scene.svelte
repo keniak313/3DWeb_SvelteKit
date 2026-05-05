@@ -115,7 +115,6 @@
 			oncontrolend={() => {
 				isDragging = false;
 			}}
-			dampingFactor={0}
 		/>
 	</T.PerspectiveCamera>
 {/if}
