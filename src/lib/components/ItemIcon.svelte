@@ -23,8 +23,16 @@
 				height={size}
 				transformer={(params) => {
 					const { src, ...options } = params;
+
+					// 1. Generujemy standardowy zestaw parametrów (?url=...&w=...)
 					const url = transform(src, options);
-					return `${url}&v=${new Date(updatedAt).getTime()}`;
+
+					// 2. Musimy upewnić się, że URL zaczyna się od /_vercel/image
+					// Jeśli transform zwraca tylko "?url=...", dodajemy prefix ręcznie.
+					const baseUrl = url.startsWith('http') ? url : `/_vercel/image${url}`;
+
+					// 3. Doklejamy timestamp na końcu
+					return `${baseUrl}&v=${new Date(updatedAt).getTime()}`;
 				}}
 			/>
 		{/if}
