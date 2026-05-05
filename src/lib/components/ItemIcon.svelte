@@ -10,9 +10,32 @@
 		if (!isNew) return `${src}?v=${new Date(updatedAt).getTime()}`;
 		else return src;
 	});
+
+	let optimizedSrc = $derived.by(() => {
+		if (isNew || dev) return src;
+
+		const timestamp = new Date(updatedAt).getTime();
+		const encoded = encodeURIComponent(src);
+
+		return `/_vercel/image?url=${encoded}&w=${size}&q=75&v=${timestamp}`;
+	});
 </script>
 
-{#if srcDate}
+{#if src}
+	<img
+		src={optimizedSrc}
+		width={size}
+		height={size}
+		alt="Preview"
+		loading="lazy"
+		style="object-fit: cover; aspect-ratio: 1/1;"
+	/>
+{:else}
+	<div style={`width: ${size}px; height: ${size}px; background-color: magenta`}></div>
+{/if}
+
+<!-- {#if srcDate}
+
 	{#if !dev}
 		{#if isNew}
 			<Image {src} width={size} height={size} />
@@ -42,4 +65,4 @@
 	{/if}
 {:else}
 	<div style={`width: ${size}px; height: ${size}px; background-color: magenta`}></div>
-{/if}
+{/if} -->
