@@ -95,7 +95,7 @@
 					</div>
 				{/if}
 
-				{#if newModel.sockets}
+				{#if newModel.sockets && Object.keys(newModel.sockets).length > 0}
 					<div class="sockets">
 						<p>SOCKETS</p>
 						{#if !modelExists}

@@ -1,7 +1,7 @@
 import { eq, getTableColumns, inArray, sql } from 'drizzle-orm';
 import { color, config, material, model, session, texture } from '$lib/server/db/schema.js';
 import { error, fail, redirect } from '@sveltejs/kit';
-import { put } from '@vercel/blob';
+import { del, put } from '@vercel/blob';
 import { BLOB_READ_WRITE_TOKEN } from '$env/static/private';
 import { updateConfig } from '$lib/server/services/configService.js';
 import { updateColors } from '$lib/server/services/colorService.js';
@@ -17,6 +17,12 @@ const safeString = z.string().regex(/^[a-zA-Z0-9_!\- ]*$/, 'Invalid characters')
 const safeStringNoSpaces = z
 	.string()
 	.regex(/^[a-zA-Z0-9_!\-]+$/, 'Spaces and special characters are not allowed');
+
+const nameWithDate = (name) => {
+	const extension = name.split('.').pop();
+	const baseName = name.replace(`.${extension}`, '');
+	return `${baseName}_v${Date.now()}.${extension}`;
+};
 
 export const actions = {
 	// logout: async ({ locals, cookies }) => {
@@ -234,7 +240,18 @@ export const actions = {
 
 			if (icon && icon instanceof File && icon.size > 0) {
 				console.log('NEW FILE ICON FOUND', icon);
-				const { url } = await put(`users/${userId}/models/icons/${icon.name}`, icon, {
+				const oldIcon = await locals.db.query.model.findFirst({
+					where: eq(model.id, modelId),
+					columns: { icon: true }
+				});
+
+				if (oldIcon?.icon) {
+					await del(oldIcon.icon, { token: BLOB_READ_WRITE_TOKEN });
+				}
+
+				const name = nameWithDate(icon.name);
+
+				const { url } = await put(`users/${userId}/models/icons/${name}`, icon, {
 					access: 'public',
 					token: BLOB_READ_WRITE_TOKEN,
 					allowOverwrite: true
@@ -351,9 +368,20 @@ export const actions = {
 
 		let uploadedFile;
 
-		if (modelData.file instanceof File) {
-			console.log('NEW FILE MODEL FOUND', modelData.file);
-			const { url } = await put(`users/${userId}/models/${modelData.file.name}`, modelData.file, {
+		if (modelData.file instanceof File && modelData.file.size > 0) {
+			const oldModel = await locals.db.query.model.findFirst({
+				where: eq(model.id, modelData.id),
+				columns: { url: true }
+			});
+
+			if (oldModel && oldModel.url) {
+				await del(oldModel.url, { token: BLOB_READ_WRITE_TOKEN });
+				console.log('OLD MODEL URL DELETED', oldModel.url);
+			}
+
+			const name = nameWithDate(modelData.file.name);
+
+			const { url } = await put(`users/${userId}/models/${name}`, modelData.file, {
 				access: 'public',
 				token: BLOB_READ_WRITE_TOKEN,
 				allowOverwrite: true
@@ -381,6 +409,7 @@ export const actions = {
 		return { updatedModels };
 	},
 	addTexture: async ({ request, locals }) => {
+		// DOPISAC LOGIKE PODMIANY I USUWANIA STARYCH TEXTUR!
 		const session = locals.session;
 		if (!session) return;
 
@@ -407,7 +436,18 @@ export const actions = {
 		for await (const id of texturesIds) {
 			const file = formData.get(`texture-file-${id}`) as File;
 
-			const { url } = await put(`users/${userId}/textures/${file.name}`, file, {
+			const oldTexture = await locals.db.query.texture.findFirst({
+				where: eq(texture.id, id),
+				columns: { url: true }
+			});
+
+			if (oldTexture) {
+				await del(oldTexture.url, { token: BLOB_READ_WRITE_TOKEN });
+			}
+
+			const name = nameWithDate(file.name);
+
+			const { url } = await put(`users/${userId}/textures/${name}`, file, {
 				access: 'public',
 				token: BLOB_READ_WRITE_TOKEN,
 				allowOverwrite: true

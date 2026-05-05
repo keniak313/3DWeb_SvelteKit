@@ -55,19 +55,21 @@
 	const loadModels = (models) => {
 		if (!loadedAssets.models) loadedAssets.models = {};
 		Object.values(models).forEach((model) => {
-			const time = model.updatedAt ? new Date(model.updatedAt).getTime() : Date.now();
-			const newUrl = model.url.startsWith('blob:') ? model.url : model.url + '?v=' + time;
+			// const time = model.updatedAt ? new Date(model.updatedAt).getTime() : Date.now();
+			// const newUrl = model.url.startsWith('blob:') ? model.url : model.url + '?v=' + time;
+
+			const url = model.url;
 
 			// SPRAWDZAMY: Czy mamy już ten model ORAZ czy jego URL jest taki sam?
 			// Jeśli URL jest inny (np. nowy blob), musimy wywołać useGltf ponownie.
-			if (!loadedAssets.models[model.name] || loadedAssets.models[model.name].url !== newUrl) {
+			if (!loadedAssets.models[model.name] || loadedAssets.models[model.name].url !== url) {
 				console.log('Ładowanie/Aktualizacja modelu:', model.name);
 
-				loadedAssets.models[model.name] = useGltf(newUrl, {
+				loadedAssets.models[model.name] = useGltf(url, {
 					dracoLoader: useDraco()
 				});
 				// Opcjonalnie zapisz URL w obiekcie, żeby móc go porównać przy następnej pętli
-				loadedAssets.models[model.name].url = newUrl;
+				loadedAssets.models[model.name].url = url;
 			}
 		});
 

@@ -95,7 +95,7 @@
 				const materialMatch = materials.find((m) => m.name === tf.name.split('_')[0]) || null;
 
 				return {
-					id: nanoid(5),
+					id: existing?.id || nanoid(5),
 					name: tf.name.split('.')[0],
 					file: tf,
 					url: URL.createObjectURL(tf),

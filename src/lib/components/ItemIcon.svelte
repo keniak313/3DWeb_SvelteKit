@@ -14,10 +14,7 @@
 	let optimizedSrc = $derived.by(() => {
 		if (isNew || dev) return src;
 
-		const timestamp = new Date(updatedAt).getTime();
-		// Doklejamy timestamp WEWNĄTRZ encodeURIComponent
-		const sourceWithVersion = `${src}?v=${timestamp}`;
-		const encoded = encodeURIComponent(sourceWithVersion);
+		const encoded = encodeURIComponent(src);
 
 		return `/_vercel/image?url=${encoded}&w=${size}&q=75`;
 	});
