@@ -15,9 +15,11 @@
 		if (isNew || dev) return src;
 
 		const timestamp = new Date(updatedAt).getTime();
-		const encoded = encodeURIComponent(src);
+		// Doklejamy timestamp WEWNĄTRZ encodeURIComponent
+		const sourceWithVersion = `${src}?v=${timestamp}`;
+		const encoded = encodeURIComponent(sourceWithVersion);
 
-		return `/_vercel/image?url=${encoded}&w=${size}&q=75&v=${timestamp}`;
+		return `/_vercel/image?url=${encoded}&w=${size}&q=75`;
 	});
 </script>
 
