@@ -14,15 +14,9 @@
 
 {#if srcDate}
 	{#if !dev}
-		<Image
-			src={srcDate}
-			width={size}
-			height={size}
-			cdn="vercel"
-			options={{ vercel: { force: true } }}
-		/>
+		<Image {src} width={size} height={size} />
 	{:else}
-		<Image src={srcDate} width={size} height={size} />
+		<Image {src} width={size} height={size} />
 	{/if}
 {:else}
 	<div style={`width: ${size}px; height: ${size}px; background-color: magenta`}></div>
