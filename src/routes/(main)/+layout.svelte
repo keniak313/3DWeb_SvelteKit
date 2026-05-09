@@ -11,8 +11,7 @@
 		<div class="nav">
 			{#if data.session}
 				<p>Logged in as: {data.session.user.username}</p>
-				<a href="/{username}"> Main user page </a>
-				<a href="/{username}/me/studio"> Studio </a>
+				<a href="/me"> ME </a>
 				<button onclick={signOut}>SIGN OUT</button>
 			{:else}
 				<button onclick={signIn}>LOGIN</button>
@@ -22,3 +21,5 @@
 </header>
 
 {@render children()}
+
+<footer></footer>

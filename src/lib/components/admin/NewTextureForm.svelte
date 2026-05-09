@@ -4,15 +4,20 @@
 	import { nanoid } from '$lib/utilities/helpers';
 	import Input from '../Input.svelte';
 	import PopupWrapper from '../PopupWrapper.svelte';
+	import SimpleLoader from '../SimpleLoader.svelte';
 
 	let formEl;
 	let newTextures = $state([]);
 	let isPreview = $state(false);
 
+	let isLoading = $state(false);
+
 	const config = getAppConfig();
 	const textures = $derived(config.data.textures);
 	const materials = $derived(config.data.materials);
 </script>
+
+<SimpleLoader {isLoading} />
 
 {#if isPreview}
 	<PopupWrapper>
@@ -66,6 +71,7 @@
 	action="?/addTexture"
 	enctype="multipart/form-data"
 	use:enhance={({ formData }) => {
+		isLoading = true;
 		if (newTextures.length > 0) {
 			newTextures.forEach((t) => {
 				formData.append('texture-id', t.id);

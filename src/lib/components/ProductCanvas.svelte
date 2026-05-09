@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import { Canvas } from '@threlte/core';
 	import { PCFShadowMap, WebGLRenderer } from 'three';
 	import Renderer from './Renderer.svelte';
@@ -8,16 +8,15 @@
 
 <Canvas
 	shadows={PCFShadowMap}
-	createRenderer={(canvas) => {
-		return new WebGLRenderer({
-			canvas,
-			preserveDrawingBuffer: true
-		});
-	}}
+	// createRenderer={(canvas) => {
+	// 	return new WebGLRenderer({
+	// 		canvas,
+	// 		preserveDrawingBuffer: true
+	// 	});
+	// }}
 	renderMode="on-demand"
 >
 	<Renderer />
-	<!-- <PerfMonitor /> -->
 	<Suspense>
 		<Scene />
 	</Suspense>

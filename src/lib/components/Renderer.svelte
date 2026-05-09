@@ -18,6 +18,8 @@
 	import { HalfFloatType } from 'three';
 	import { SSAARenderPass } from 'three/examples/jsm/Addons.js';
 
+	let { useVignette = true } = $props();
+
 	const { scene, renderer, camera, size } = useThrelte();
 
 	// Adapt the default WebGLRenderer: https://github.com/pmndrs/postprocessing#usage

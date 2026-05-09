@@ -4,8 +4,6 @@
 	import { signIn, signOut } from '$lib/auth-client';
 
 	let { children, data } = $props();
-
-	const username = $derived(data.session.user.username);
 </script>
 
 <svelte:head>

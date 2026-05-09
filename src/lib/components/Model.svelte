@@ -14,7 +14,7 @@
 
 	const { renderer, camera } = useThrelte();
 
-	let { model, isDragging, children = () => {} } = $props();
+	let { model, isPreview = false, isDragging, children = () => {} } = $props();
 
 	const config = getAppConfig('previewConfig');
 
@@ -46,6 +46,10 @@
 	let lastModelName = null;
 
 	$effect(() => {
+		if (isPreview) {
+			scaleTween.set(1);
+			return;
+		}
 		const currentName = config.selected.modelName;
 		const isSelected = currentName === model.name;
 
@@ -65,6 +69,8 @@
 	let partsVisible = $state(
 		model.parts ? Object.fromEntries(Object.values(model.parts).map((p) => [p.name, true])) : []
 	);
+
+	console.log('MODEL to render', model);
 </script>
 
 {#snippet renderMesh(part, mesh)}
@@ -123,7 +129,7 @@
 			{@const mat = mesh.material}
 			<T.MeshStandardMaterial aoMap={mat.aoMap} aoMapIntensity={2} color={mat.color} />
 		{/if}
-		{#if mesh.children.length > 0}
+		{#if mesh.children.length > 0 && !isPreview}
 			{#each mesh.children as child (child.uuid)}
 				<HTML
 					position={[child.position.x, child.position.y, child.position.z]}
@@ -151,7 +157,7 @@
 {/snippet}
 
 {#if model}
-	<T.Group scale={scaleTween.current} oncreate={(e) => {}}>
+	<T.Group scale={scaleTween.current}>
 		{#if $gltf}
 			{#each $gltf.scene.children as mesh, index (mesh.uuid)}
 				{@const socket = checkName(mesh.name).socket()}

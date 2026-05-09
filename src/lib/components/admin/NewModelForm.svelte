@@ -10,6 +10,7 @@
 	import { Canvas } from '@threlte/core';
 	import PreviewCanvas from '../PreviewCanvas.svelte';
 	import PopupWrapper from '../PopupWrapper.svelte';
+	import SimpleLoader from '../SimpleLoader.svelte';
 
 	const dracoLoader = useDraco();
 
@@ -24,6 +25,8 @@
 	let existingModel = $state({});
 
 	let formEl;
+
+	let isLoading = $state(false);
 
 	let triangleCount = $derived.by(() => {
 		if (newModelGltf) {
@@ -45,6 +48,8 @@
 		}
 	});
 </script>
+
+<SimpleLoader {isLoading} />
 
 {#if isPreview}
 	<PopupWrapper>
@@ -148,6 +153,7 @@
 	enctype="multipart/form-data"
 	bind:this={formEl}
 	use:enhance={({ formData }) => {
+		isLoading = true;
 		if (newModel) {
 			formData.append('model', JSON.stringify(newModel));
 			formData.append('modelFile', newModel.file);

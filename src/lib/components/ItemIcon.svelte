@@ -1,15 +1,9 @@
 <script lang="ts">
 	import { dev } from '$app/environment';
-	import { Image } from '@unpic/svelte';
-	import { transform } from 'unpic/providers/vercel';
+	// import { Image } from '@unpic/svelte';
+	// import { transform } from 'unpic/providers/vercel';
 
-	let { src, isNew = false, updatedAt, size = 50 } = $props();
-
-	let srcDate = $derived.by(() => {
-		if (!src) return null;
-		if (!isNew) return `${src}?v=${new Date(updatedAt).getTime()}`;
-		else return src;
-	});
+	let { src, isNew = false, size = 50 } = $props();
 
 	let optimizedSrc = $derived.by(() => {
 		if (isNew || dev) return src;

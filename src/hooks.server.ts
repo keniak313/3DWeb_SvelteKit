@@ -16,15 +16,5 @@ export const handle: Handle = async ({ event, resolve }) => {
 		event.locals.session.user = session.user;
 	}
 
-	if (event.route.id?.startsWith('/(protected)')) {
-		if (!session) {
-			throw redirect(303, '/login');
-			// error(403, 'Musisz się zalogować');
-		}
-		// if (session && session.user.role !== 'admin') {
-		// 	error(403, 'Brak Dostępu');
-		// }
-	}
-
 	return svelteKitHandler({ event, resolve, auth, building });
 };

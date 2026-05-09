@@ -63,7 +63,7 @@
 
 	<div class="right">
 		<div class="nav">
-			{#if data.session.user.role === 'admin'}
+			{#if data.session?.user?.role === 'admin'}
 				<button onclick={() => (selectedMenu = 'scene')}>Scene</button>
 			{/if}
 			<button

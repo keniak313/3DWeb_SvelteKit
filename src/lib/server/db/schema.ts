@@ -5,6 +5,17 @@ import { customAlphabet } from 'nanoid';
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 const nanoid = customAlphabet(alphabet, 21); // 21 is the default length
 
+export const workspace = sqliteTable('workspace', {
+	id: text('id')
+		.primaryKey()
+		.$defaultFn(() => nanoid(10)),
+	name: text('name').notNull(),
+	slug: text('slug').notNull(),
+	createdAt: text('created_at', { mode: 'text' })
+		.notNull()
+		.default(sql`CURRENT_TIMESTAMP`)
+});
+
 export const color = sqliteTable('color', {
 	id: text('id')
 		.primaryKey()
@@ -16,8 +27,15 @@ export const color = sqliteTable('color', {
 		.notNull()
 		.default(sql`CURRENT_TIMESTAMP`),
 	deletedAt: text('deleted_at'),
-	userId: text('user_id').references(() => user.id, { onDelete: 'cascade' })
+	workspaceId: text('workspace_id').references(() => workspace.id, { onDelete: 'cascade' })
 });
+
+export const colorRelations = relations(color, ({ one }) => ({
+	workspace: one(workspace, {
+		fields: [color.workspaceId],
+		references: [workspace.id]
+	})
+}));
 
 export const material = sqliteTable('material', {
 	id: text('id')
@@ -36,8 +54,15 @@ export const material = sqliteTable('material', {
 		.notNull()
 		.default(sql`CURRENT_TIMESTAMP`),
 	deletedAt: text('deleted_at'),
-	userId: text('user_id').references(() => user.id, { onDelete: 'cascade' })
+	workspaceId: text('workspace_id').references(() => workspace.id, { onDelete: 'cascade' })
 });
+
+export const materialRelations = relations(material, ({ one }) => ({
+	workspace: one(workspace, {
+		fields: [material.workspaceId],
+		references: [workspace.id]
+	})
+}));
 
 export const model = sqliteTable('model', {
 	id: text('id')
@@ -71,8 +96,15 @@ export const model = sqliteTable('model', {
 		.default(sql`CURRENT_TIMESTAMP`)
 		.$onUpdate(() => sql`CURRENT_TIMESTAMP`),
 	deletedAt: text('deleted_at'),
-	userId: text('user_id').references(() => user.id, { onDelete: 'cascade' })
+	workspaceId: text('workspace_id').references(() => workspace.id, { onDelete: 'cascade' })
 });
+
+export const modelRelations = relations(model, ({ one }) => ({
+	workspace: one(workspace, {
+		fields: [model.workspaceId],
+		references: [workspace.id]
+	})
+}));
 
 export const texture = sqliteTable('texture', {
 	id: text('id')
@@ -87,8 +119,15 @@ export const texture = sqliteTable('texture', {
 		.notNull()
 		.default(sql`CURRENT_TIMESTAMP`)
 		.$onUpdate(() => sql`CURRENT_TIMESTAMP`),
-	userId: text('user_id').references(() => user.id, { onDelete: 'cascade' })
+	workspaceId: text('workspace_id').references(() => workspace.id, { onDelete: 'cascade' })
 });
+
+export const textureRelations = relations(texture, ({ one }) => ({
+	workspace: one(workspace, {
+		fields: [texture.workspaceId],
+		references: [workspace.id]
+	})
+}));
 
 export const config = sqliteTable('config', {
 	id: text('id')
@@ -97,6 +136,37 @@ export const config = sqliteTable('config', {
 	name: text('name').notNull(),
 	settings: text('settings', { mode: 'json' })
 });
+
+export const workspaceRelations = relations(workspace, ({ many }) => ({
+	workspaceToUser: many(workspaceToUser),
+	models: many(model),
+	colors: many(color),
+	materials: many(material),
+	textures: many(texture)
+}));
+
+export const workspaceToUser = sqliteTable(
+	'workspace_to_user',
+	{
+		userId: text('user_id').references(() => user.id, { onDelete: 'cascade' }),
+		workspaceId: text('workspace_id').references(() => workspace.id, { onDelete: 'cascade' }),
+		role: text('role', { enum: ['owner', 'member'] })
+			.notNull()
+			.default('member')
+	},
+	(t) => [primaryKey({ columns: [t.userId, t.workspaceId] })]
+);
+
+export const workspaceToUserRelations = relations(workspaceToUser, ({ one }) => ({
+	workspace: one(workspace, {
+		fields: [workspaceToUser.workspaceId],
+		references: [workspace.id]
+	}),
+	user: one(user, {
+		fields: [workspaceToUser.userId],
+		references: [user.id]
+	})
+}));
 
 export const user = sqliteTable('user', {
 	id: text('id').primaryKey(),
@@ -115,6 +185,12 @@ export const user = sqliteTable('user', {
 		.$onUpdate(() => /* @__PURE__ */ new Date())
 		.notNull()
 });
+
+export const userRelations = relations(user, ({ many, one }) => ({
+	sessions: many(session),
+	accounts: many(account),
+	workspaces: many(workspaceToUser)
+}));
 
 export const session = sqliteTable('session', {
 	id: text('id').primaryKey(),
@@ -173,11 +249,6 @@ export const verification = sqliteTable('verification', {
 		.$onUpdate(() => /* @__PURE__ */ new Date())
 		.notNull()
 });
-
-export const userRelations = relations(user, ({ many, one }) => ({
-	sessions: many(session),
-	accounts: many(account)
-}));
 
 export const sessionRelations = relations(session, ({ one }) => ({
 	user: one(user, {

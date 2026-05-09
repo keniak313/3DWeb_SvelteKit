@@ -4,12 +4,15 @@
 	import Input from '../Input.svelte';
 	import { checkName, nanoid } from '$lib/utilities/helpers';
 	import { goto, invalidateAll } from '$app/navigation';
-	import { getContext } from 'svelte';
+	import { getContext, setContext } from 'svelte';
 	import { Image } from '@unpic/svelte';
 	import InputSelect from '../InputSelect.svelte';
-	import { useDraco } from '@threlte/extras';
 	import ItemIcon from '../ItemIcon.svelte';
 	import { getAppConfig } from '$lib/state/config.svelte';
+	import PopupWrapper from '../PopupWrapper.svelte';
+	import IconCanvas from '../IconCanvas.svelte';
+	import IconCanvasUI from '../IconCanvasUI.svelte';
+	import IconGen from '../IconGen.svelte';
 
 	let { form } = $props();
 
@@ -23,44 +26,15 @@
 	const materials = $derived(config.data.materials);
 	const colors = $derived(config.data.colors);
 
-	const generateIcon = async (model) => {
-		const targetSize = 512;
-		// 1. Spróbuj znaleźć canvas (dodaj klasę lub id do <Canvas> dla pewności)
-		const sourceCanvas = document.querySelector('canvas');
+	let iconGen = $state({
+		isOpen: false,
+		model: null
+	});
 
-		if (!sourceCanvas) {
-			console.error('Nie znaleziono elementu canvas!');
-			return null;
-		}
+	setContext('iconGen', iconGen);
 
-		// 2. Sprawdź czy wymiary źródła są poprawne (nie są 0)
-		if (sourceCanvas.width === 0 || sourceCanvas.height === 0) {
-			console.error('Canvas ma zerowe wymiary!');
-			return null;
-		}
-
-		const tempCanvas = document.createElement('canvas');
-		tempCanvas.width = targetSize;
-		tempCanvas.height = targetSize;
-		const ctx = tempCanvas.getContext('2d');
-
-		if (!ctx) return null;
-
-		const sw = sourceCanvas.width;
-		const sh = sourceCanvas.height;
-		const size = Math.min(sw, sh);
-		const sx = (sw - size) / 2;
-		const sy = (sh - size) / 2;
-
-		// Przechwycenie obrazu
-		ctx.drawImage(sourceCanvas, sx, sy, size, size, 0, 0, targetSize, targetSize);
-
-		model.newIcon = true;
-
-		const url = tempCanvas.toDataURL('image/webp');
-		console.log('ICON URL', url);
-		return url;
-	};
+	// let isIconGenOpen = $state(false);
+	// let iconModel = $state(null);
 
 	let formEl;
 	let timeout;
@@ -84,6 +58,10 @@
 
 {#if form}
 	{console.log('MODELS ERRORS:', form)}
+{/if}
+
+{#if iconGen.isOpen && iconGen.model}
+	<IconGen />
 {/if}
 
 <form
@@ -124,19 +102,21 @@
 	<h2>MODELS</h2>
 	<hr />
 	{#if models.length > 0}
-		{#each models as model, index (model.id)}
-			<button
-				type="button"
-				style={form?.error?.items[index] ? 'background-color: red;' : ''}
-				onclick={() => {
-					if (config.selectedAsset?.model?.name === model.name) {
-						config.clearSelection();
-					} else {
-						config.setSelected({ modelName: model.name });
-					}
-				}}>{model.name}</button
-			>
-		{/each}
+		{#if models.length > 0}
+			{#each models as model, index (model.id)}
+				<button
+					type="button"
+					style={form?.error?.items[index] ? 'background-color: red;' : ''}
+					onclick={() => {
+						if (config.selectedAsset?.model?.name === model.name) {
+							config.clearSelection();
+						} else {
+							config.setSelected({ modelName: model.name });
+						}
+					}}>{model.name}</button
+				>
+			{/each}
+		{/if}
 		<!-- <p>ATTACHMENTS:</p> -->
 		<!-- {#each models.filter((m) => m.isAttachment) as model, index (model.id)}
 			<button
@@ -158,18 +138,13 @@
 				<div>
 					<p>ICON</p>
 					<ItemIcon src={model.icon} updatedAt={model.updatedAt} isNew={model.newIcon} size={100} />
-					<!-- {#if model.icon}
-						{#if !model.newIcon}
-							<Image src={model.icon + '?v=' + time} alt="" width="100" height="100" />
-						{:else}
-							<Image src={model.icon} alt="" width="100" height="100" />
-						{/if}
-					{/if} -->
 					<button
 						type="button"
 						onclick={async () => {
 							console.log('MODEL TO GENERATE', model);
-							model.icon = await generateIcon(model);
+							// model.icon = await generateIcon(model);
+							iconGen.isOpen = true;
+							iconGen.model = { ...model };
 						}}
 						>GENERATE ICON
 					</button>

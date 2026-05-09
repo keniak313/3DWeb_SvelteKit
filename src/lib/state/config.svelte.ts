@@ -244,7 +244,16 @@ export const createConfig = (
 
 	function setAssetMaterial({ materialId }) {
 		const model = data.models.find((m) => m.name === selected.partModelName);
+		if(!model) {
+			console.error('Model not found for partModelName: ', selected.partModelName);
+			return;
+		}
+		
 		const part = model.parts[selected.partName];
+		if(!part) {
+			console.error('Part not found for partName: ', selected.partName, ' in model: ', model);
+			return;
+		}
 
 		if (part) {
 			const selectedPart = data.models.find((m) => m.name === part.name);
@@ -252,6 +261,10 @@ export const createConfig = (
 		}
 
 		const material = data.materials.find((m) => m.id === materialId);
+		if(!material) {
+			console.error('Material not found for materialId: ', materialId);
+			return;
+		}
 
 		part.material = materialId;
 		part.color = material.color;

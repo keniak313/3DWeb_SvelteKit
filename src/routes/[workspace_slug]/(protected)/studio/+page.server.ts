@@ -1,5 +1,14 @@
-import { eq, getTableColumns, inArray, sql } from 'drizzle-orm';
-import { color, config, material, model, session, texture } from '$lib/server/db/schema.js';
+import { and, eq, getTableColumns, inArray, sql } from 'drizzle-orm';
+import {
+	color,
+	config,
+	material,
+	model,
+	session,
+	texture,
+	workspace,
+	workspaceToUser
+} from '$lib/server/db/schema.js';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { del, put } from '@vercel/blob';
 import { BLOB_READ_WRITE_TOKEN } from '$env/static/private';
@@ -24,22 +33,45 @@ const nameWithDate = (name) => {
 	return `${baseName}_v${Date.now()}.${extension}`;
 };
 
+const checkSessionAndWorkspace = async (locals, params) => {
+	const session = locals.session;
+	if (!session) {
+		throw redirect(302, `/${params.workspace_slug}`);
+	}
+
+	const workspaceData = await locals.db.query.workspace.findFirst({
+		where: eq(workspace.slug, params.workspace_slug),
+		columns: { id: true }
+	});
+
+	if (!workspaceData) {
+		throw error(404, 'Workspace nie istnieje');
+	}
+
+	const workspaceUser = await locals.db.query.workspaceToUser.findFirst({
+		where: and(
+			eq(workspaceToUser.userId, session.user.id),
+			eq(workspaceToUser.workspaceId, workspaceData.id)
+		)
+	});
+
+	if (!workspaceUser) {
+		// return { error: 'Nie masz dostępu do tego workspace' };
+		throw error(403, 'Nie masz dostępu do tego workspace');
+	}
+
+	const workspaceId = workspaceUser.workspaceId;
+
+	return { workspaceId };
+};
+
+export const load = async ({ locals, params }) => {
+	await checkSessionAndWorkspace(locals, params);
+};
+
 export const actions = {
-	// logout: async ({ locals, cookies }) => {
-	// 	console.log('logout action');
-	// 	const sessionId = cookies.get('session_auth');
-	// 	if (sessionId) {
-	// 		await locals.db.delete(session).where(eq(session.id, sessionId));
-	// 	}
-	// 	cookies.delete('session_auth', { path: '/' });
-
-	// 	throw redirect(303, '/login');
-	// },
-	saveColors: async ({ request, locals }) => {
-		const session = locals.session;
-		if (!session) return;
-
-		const userId = session?.user.id;
+	saveColors: async ({ request, locals, params }) => {
+		const { workspaceId } = await checkSessionAndWorkspace(locals, params);
 
 		const formData = await request.formData();
 
@@ -54,7 +86,7 @@ export const actions = {
 				deletedAt: formData.get(`color-deletedAt-${id}`)
 					? formData.get(`color-deletedAt-${id}`)
 					: null,
-				userId: userId
+				workspaceId: workspaceId
 			};
 		});
 
@@ -64,7 +96,7 @@ export const actions = {
 			displayName: safeString,
 			name: requiredString.pipe(safeStringNoSpaces),
 			deletedAt: z.string().nullable(),
-			userId: z.string()
+			workspaceId: z.string()
 		});
 
 		const parsedData = z.array(colorSchema).safeParse(newColors);
@@ -73,11 +105,7 @@ export const actions = {
 		const colorUpdateFields = Object.fromEntries(
 			Object.entries(colorColumns)
 				.filter(([key]) => key !== 'id')
-				.map(([key, column]) => [
-					key,
-					// Używamy column.name, aby dostać czysty string nazwy kolumny w SQL
-					sql.raw(`excluded.${column.name}`)
-				])
+				.map(([key, column]) => [key, sql.raw(`excluded.${column.name}`)])
 		);
 
 		if (!parsedData.success) {
@@ -95,11 +123,8 @@ export const actions = {
 			return { success: true, error: null };
 		}
 	},
-	saveMaterials: async ({ request, locals }) => {
-		const session = locals.session;
-		if (!session) return;
-
-		const userId = session?.user.id;
+	saveMaterials: async ({ request, locals, params }) => {
+		const { workspaceId } = await checkSessionAndWorkspace(locals, params);
 
 		const formData = await request.formData();
 
@@ -117,7 +142,7 @@ export const actions = {
 				opacity: Number(formData.get(`material-opacity-${id}`)),
 				color: formData.get(`material-color-${id}`) || null,
 				colors: JSON.parse(formData.get(`material-colors-${id}`)),
-				userId: userId
+				workspaceId: workspaceId
 			};
 		});
 
@@ -132,7 +157,7 @@ export const actions = {
 			opacity: z.number(),
 			color: z.string({ message: 'Color is required' }),
 			colors: z.array(z.object({ id: z.string() })).min(1, 'Colors are required'),
-			userId: z.string()
+			workspaceId: z.string()
 		});
 
 		const parsedData = z.array(materialSchema).safeParse(newMaterials);
@@ -163,11 +188,40 @@ export const actions = {
 			return { success: true, error: null };
 		}
 	},
-	saveModels: async ({ request, locals }) => {
-		const session = locals.session;
-		if (!session) return;
+	saveIcon: async ({ request, locals, params }) => {
+		const { workspaceId } = await checkSessionAndWorkspace(locals, params);
 
-		const userId = session?.user.id;
+		const formData = await request.formData();
+
+		const modelId = formData.get('model-id');
+		const icon = formData.get('model-icon');
+
+		if (icon && icon.size > 0) {
+			const curModel = await locals.db.query.model.findFirst({
+				where: eq(model.id, modelId)
+			});
+
+			if (curModel?.icon) {
+				await del(curModel.icon, { token: BLOB_READ_WRITE_TOKEN });
+			}
+
+			const name = nameWithDate(icon.name);
+
+			const { url } = await put(`workspaces/${workspaceId}/models/icons/${name}`, icon, {
+				access: 'public',
+				token: BLOB_READ_WRITE_TOKEN,
+				allowOverwrite: true
+			});
+
+			const newIcon = url;
+
+			await locals.db.update(model).set({ icon: newIcon }).where(eq(model.id, modelId));
+
+			return { success: true, error: null };
+		}
+	},
+	saveModels: async ({ request, locals, params }) => {
+		const { workspaceId } = await checkSessionAndWorkspace(locals, params);
 
 		const formData = await request.formData();
 
@@ -251,7 +305,7 @@ export const actions = {
 
 				const name = nameWithDate(icon.name);
 
-				const { url } = await put(`users/${userId}/models/icons/${name}`, icon, {
+				const { url } = await put(`workspaces/${workspaceId}/models/icons/${name}`, icon, {
 					access: 'public',
 					token: BLOB_READ_WRITE_TOKEN,
 					allowOverwrite: true
@@ -277,7 +331,7 @@ export const actions = {
 				isAttachment: formData.get(`model-isAttachment-${modelId}`) === 'true' ? true : false,
 				socket: formData.get(`model-socket-${modelId}`) || null,
 				updatedAt: new Date().toISOString(),
-				userId: userId
+				workspaceId: workspaceId
 			});
 		}
 
@@ -321,10 +375,8 @@ export const actions = {
 				.optional(),
 			socket: z.string().nullable(),
 			updatedAt: z.string(),
-			userId: z.string()
+			workspaceId: z.string()
 		});
-
-		//DODAC SOCKETS I PARTS DO ZAKRESU WALIDACJI
 
 		console.log('DANE DO WALIDACJI:', newModels);
 
@@ -351,20 +403,17 @@ export const actions = {
 		}
 
 		const updatedModels = await locals.db.query.model.findMany({
-			where: eq(model.userId, userId)
+			where: eq(model.workspaceId, workspaceId)
 		});
 		return { updatedModels };
 	},
-	addModel: async ({ request, locals }) => {
-		const session = locals.session;
-		if (!session) return;
-
-		const userId = session?.user.id;
+	addModel: async ({ request, locals, params }) => {
+		const { workspaceId } = await checkSessionAndWorkspace(locals, params);
 
 		const formData = await request.formData();
 		const modelData = JSON.parse(formData.get('model'));
 		modelData.file = formData.get('modelFile');
-		modelData.userId = userId;
+		modelData.workspaceId = workspaceId;
 
 		let uploadedFile;
 
@@ -381,7 +430,7 @@ export const actions = {
 
 			const name = nameWithDate(modelData.file.name);
 
-			const { url } = await put(`users/${userId}/models/${name}`, modelData.file, {
+			const { url } = await put(`workspaces/${workspaceId}/models/${name}`, modelData.file, {
 				access: 'public',
 				token: BLOB_READ_WRITE_TOKEN,
 				allowOverwrite: true
@@ -404,16 +453,16 @@ export const actions = {
 			.values(modelData)
 			.onConflictDoUpdate({ target: model.id, set: modelsUpdateFields });
 
-		const updatedModels = await locals.db.query.model.findMany({ where: eq(model.userId, userId) });
+		const updatedModels = await locals.db.query.model.findMany({
+			where: eq(model.workspaceId, workspaceId)
+		});
 
 		return { updatedModels };
 	},
-	addTexture: async ({ request, locals }) => {
+	addTexture: async ({ request, locals, params }) => {
 		// DOPISAC LOGIKE PODMIANY I USUWANIA STARYCH TEXTUR!
-		const session = locals.session;
-		if (!session) return;
 
-		const userId = session?.user.id;
+		const { workspaceId } = await checkSessionAndWorkspace(locals, params);
 
 		const formData = await request.formData();
 
@@ -447,7 +496,7 @@ export const actions = {
 
 			const name = nameWithDate(file.name);
 
-			const { url } = await put(`users/${userId}/textures/${name}`, file, {
+			const { url } = await put(`workspaces/${workspaceId}/textures/${name}`, file, {
 				access: 'public',
 				token: BLOB_READ_WRITE_TOKEN,
 				allowOverwrite: true
@@ -458,7 +507,7 @@ export const actions = {
 				name: file.name.split('.')[0],
 				url: url,
 				updatedAt: new Date().toISOString(),
-				userId: userId
+				workspaceId: workspaceId
 			});
 		}
 
@@ -466,11 +515,7 @@ export const actions = {
 		const textureUpdateFields = Object.fromEntries(
 			Object.entries(texturesColumns)
 				.filter(([key]) => key !== 'id')
-				.map(([key, column]) => [
-					key,
-					// Używamy column.name, aby dostać czysty string nazwy kolumny w SQL
-					sql.raw(`excluded.${column.name}`)
-				])
+				.map(([key, column]) => [key, sql.raw(`excluded.${column.name}`)])
 		);
 
 		if (newTextures.length > 0) {

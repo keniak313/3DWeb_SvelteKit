@@ -1,9 +1,9 @@
 <script lang="ts">
-	let { children } = $props();
+	let { children, isSquare = false } = $props();
 </script>
 
 <div class="wrapper">
-	<div class="content">
+	<div class="content {isSquare ? 'square' : 'non-square'}">
 		{@render children?.()}
 	</div>
 </div>
@@ -25,9 +25,17 @@
 	}
 
 	.content {
-		width: 90%;
+		position: relative;
 		height: 90%;
 		background-color: white;
 		display: flex;
+	}
+
+	.non-square {
+		width: 90%;
+	}
+
+	.square {
+		aspect-ratio: 1 / 1;
 	}
 </style>
